@@ -48,9 +48,7 @@
       use icepack_tracers, only: nt_fsd, tr_fsd
       use icepack_warnings, only: warnstr, icepack_warnings_add
       use icepack_warnings, only: icepack_warnings_setabort, icepack_warnings_aborted
-! noah day wim 001 -------------------------------------------------------------
-      use icepack_floe
-!-------------------------------------------------------------------------------
+
       implicit none
 
       private
@@ -249,9 +247,7 @@
          write(warnstr,*) ' '
          call icepack_warnings_add(warnstr)
       endif
-! noah day wim 002 -------------------------------------------------------------
-call init_floe
-! ------------------------------------------------------------------------------
+
       end subroutine icepack_init_fsd_bounds
 
 !=======================================================================
@@ -703,6 +699,7 @@ call init_floe
 
       afsdn_latg(:,n) = afsdn(:,n)  ! default
 
+
       if (d_an_latg(n) > puny) then ! lateral growth
 
          ! adaptive timestep
@@ -803,6 +800,8 @@ call init_floe
 
             trcrn(nt_fsd:nt_fsd+nfsd-1,n) = afsd_ni(:)
             call icepack_cleanup_fsdn (nfsd, trcrn(nt_fsd:nt_fsd+nfsd-1,n))
+
+
             if (icepack_warnings_aborted(subname)) return
          endif ! d_an_newi > puny
       endif    ! n = 1
