@@ -27,6 +27,7 @@ use icepack_parameters, only: bignum, puny, gravit, pi
 use icepack_tracers, only: nt_fsd
 use icepack_warnings, only: warnstr, icepack_warnings_add,  icepack_warnings_aborted
 use icepack_fsd
+!use ice_domain_size, only: ncat, nfsd, nfreq
 !use ice_state ! noah day wim 004
 !
 !EOP
@@ -164,9 +165,9 @@ end subroutine init_floe_0
 !
 ! !USES:
 !
-      use m_prams_waveice
-      use m_waveice
-      use m_waveattn
+      !use m_prams_waveice
+      !use m_waveice
+      !use m_waveattn
 
 ! !INPUT/OUTPUT PARAMETERS:
 !
@@ -218,10 +219,10 @@ end subroutine init_floe_0
 !     ! open ocean wave params
       real(kind=dbl_kind), parameter                  :: fmin = 1d0/16d0, fmax = 1d0/6d0
                                                   ! freq min/max
-      real(kind=dbl_kind), parameter                  :: om1=2*pi*fmin, om2=2*pi*fmax
+      !real(kind=dbl_kind), parameter                  :: om1=2*pi*fmin, om2=2*pi*fmax
                                                   ! ang freqs
-      real(kind=dbl_kind), parameter                  :: om_0 = (om2 - om1)/(nw_in-1)
-      real(kind=dbl_kind), dimension(nw_in)           :: om_in, T
+      !real(kind=dbl_kind), parameter                  :: om_0 = (om2 - om1)/(nw_in-1)
+      !real(kind=dbl_kind), dimension(nw_in)           :: om_in, T
                                                   ! freqency
       real(kind=dbl_kind), dimension(nth_in)          :: th_in
                                                   ! direction (not used yet!!!!)
@@ -265,18 +266,18 @@ end subroutine init_floe_0
 
 !!! Calculate wavenumbers & wavelengths
 
-	  do lp_i=1,nw_in
-       om_in(lp_i)        = om1 + (lp_i-1)*om_0
-       T(lp_i)            = 2d0*pi/om_in(lp_i)
-       lam_wtr_in(lp_i)   = gravity*(T(lp_i)**2d0)/2d0/pi
-       k_wtr_in(lp_i)     = 2d0*pi/lam_wtr_in(lp_i)
-    end do
+	 ! do lp_i=1,nw_in
+    !   om_in(lp_i)        = om1 + (lp_i-1)*om_0
+    !   T(lp_i)            = 2d0*pi/om_in(lp_i)
+    !   lam_wtr_in(lp_i)   = gravity*(T(lp_i)**2d0)/2d0/pi
+    !   k_wtr_in(lp_i)     = 2d0*pi/lam_wtr_in(lp_i)
+    !end do
 
 
     ! noah day wim 007 -------
 
-    write(warnstr,*) 'INIT FLOE', lam_wtr_in(lp_i)
-    call icepack_warnings_add(warnstr)
+    !write(warnstr,*) 'INIT FLOE', lam_wtr_in(lp_i)
+    !call icepack_warnings_add(warnstr)
 
     ! --------------------
 
@@ -285,7 +286,34 @@ end subroutine init_floe_0
 
 !=======================================================================
 
+function fn_Attn_MBK(dum_om)
+!
+! !USES:
+!
+! !INPUT PARAMETERS:
+!
 
+!real(kind=8), intent (in) :: dum_om        ! ang freq
+real(kind=dbl_kind), intent (in), dimension(25) :: dum_om        ! ang freq
+
+!
+! !OUTPUT PARAMETERS
+!
+
+real(kind=dbl_kind), dimension(25) :: fn_Attn_MBK
+
+!
+!EOP
+!
+
+real(kind=8), parameter :: beta0 = 5.376168295200780E-005, &
+   beta1 = 2.947870279251530E-005
+
+fn_Attn_MBK = beta0*(dum_om**2) + beta1*(dum_om**4)
+
+!fn_Attn_MBK = attn_fac*fn_Attn_MBK
+
+end function fn_Attn_MBK
 
 
 !=======================================================================

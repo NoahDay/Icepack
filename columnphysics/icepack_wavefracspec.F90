@@ -275,6 +275,18 @@
       !call icepack_warnings_add(warnstr)
       ! ------------------------------------------------------------------------------
 
+      ! noah day wim -----------------------------------------------------------------
+      ! attenuate the wave_spec
+      !write(warnstr,*) 'wave frequency (wavefreq) before attenuation', wave_spectrum
+      !call icepack_warnings_add(warnstr)
+      !omdum = fn_Attn_MBK(wavefreq)
+      !write(warnstr,*) 'wave frequency (wavefreq) after attenuation', omdum
+      !call icepack_warnings_add(warnstr)
+
+
+      ! ------------------------------------------------------------------------------
+
+
 
       ! if all ice is not in first floe size category
       if (.NOT. ALL(trcrn(nt_fsd,:).ge.c1-puny)) then
@@ -485,6 +497,9 @@
       end do
 
       ! Noah Day WIM 008 -------------------------------
+    !  do j = 1, nx
+    !     spec_efreq = spec_efreq*(1/j)
+      !end do
       !fn_Attn_MBK(wavefreq)
       ! ------------------------------------------------
 
