@@ -269,25 +269,6 @@
       d_afsdn_wave   (:,:) = c0
       fracture_hist  (:)   = c0
 
-      ! noah day wim 002 -------------------------------------------------------------
-      !call init_floe_0(trcrn)
-      !write(warnstr,*) 'INIT FLOE', trcrn(nt_fsd,:)
-      !call icepack_warnings_add(warnstr)
-      ! ------------------------------------------------------------------------------
-
-      ! noah day wim -----------------------------------------------------------------
-      ! attenuate the wave_spec
-      !write(warnstr,*) 'wave frequency (wavefreq) before attenuation', wave_spectrum
-      !call icepack_warnings_add(warnstr)
-      !omdum = fn_Attn_MBK(wavefreq)
-      !write(warnstr,*) 'wave frequency (wavefreq) after attenuation', omdum
-      !call icepack_warnings_add(warnstr)
-
-
-      ! ------------------------------------------------------------------------------
-
-
-
       ! if all ice is not in first floe size category
       if (.NOT. ALL(trcrn(nt_fsd,:).ge.c1-puny)) then
 

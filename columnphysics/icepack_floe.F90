@@ -315,6 +315,151 @@ fn_Attn_MBK = beta0*(dum_om**2) + beta1*(dum_om**4)
 
 end function fn_Attn_MBK
 
+!=======================================================================
+
+!!!!!!!!!!!!!!!!!!!!!
+!!! fn_SpecMoment !!!
+!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: fn_SpecMoment
+!
+! !DESCRIPTION:
+!
+!  blah blah blah
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+
+function fn_SpecMoment(dum_S, nw_in, nth_in, om_in, th_in, mom, idl)
+
+!
+! !USES:
+!
+!
+! !INPUT PARAMETERS:
+!
+integer, intent(in)                                :: nw_in, nth_in, mom, idl
+real (kind=8), dimension(nw_in), intent(in)        :: om_in
+real (kind=8), dimension(nth_in), intent(in)       :: th_in
+real (kind=8), dimension(nw_in*nth_in), intent(in) :: dum_S
+!
+! !OUTPUT PARAMETERS
+!
+real (kind=8)                            :: fn_SpecMoment
+!
+!EOP
+!
+
+integer                                  :: loop_w, loop_th
+real (kind=8), dimension(nw_in*nth_in)   :: wt_simp, wt_int
+real (kind=8), dimension(nw_in)          :: dum_simp
+real (kind=8), dimension(nth_in)         :: dum_simp_th
+real (kind=8), dimension(nw_in*nth_in)   :: dum_v
+real (kind=8)							  :: dom_local, dth_local
+
+dom_local = om_in(2)-om_in(1)
+
+if (nth_in.eq.1) then
+ dth_local = 3d0         ! for Simpson's rule
+else
+ dth_local = th_in(2)-th_in(1)
+end if
+
+! if (idl.ne.0) then
+!  write(idl,*) '                     --> into fn_SpecMoment...'
+!  write(idl,*) '                         nw=', nw_in
+!  write(idl,*) '                         th=', nth_in
+!  write(idl,*) '                         mom=', mom
+!  write(idl,*) '                         om=', om_in(1), '->', om_in(nw_in)
+!  write(idl,*) '                         th=', th_in(1), '->', th_in(nth_in)
+!  write(idl,*) '                         S=',  dum_S(1), '->', dum_S(nw_in*nth_in)
+!  write(idl,*) '                         dom=', dom_local
+!  write(idl,*) '                         dth=', dth_local
+! end if
+
+dum_simp(1) = 1d0
+dum_simp(nw_in) = 1d0
+
+do loop_w=2,nw_in-1,2
+ dum_simp(loop_w) = 4d0
+end do
+
+do loop_w=3,nw_in-1,2
+ dum_simp(loop_w) = 2d0
+end do
+
+dum_simp_th(1) = 1d0
+dum_simp_th(nth_in) = 1d0
+
+do loop_th=2,nth_in-1,2
+ dum_simp_th(loop_th) = 4d0
+end do
+
+do loop_th=3,nth_in-1,2
+ dum_simp_th(loop_th) = 2d0
+end do
+
+do loop_w=1,nw_in
+ do loop_th=1,nth_in
+  wt_simp(loop_w+nw_in*(loop_th-1)) = dum_simp(loop_w)*dum_simp_th(loop_th)
+ end do
+end do
+
+do loop_w=1,nw_in
+ do loop_th=1,nth_in
+  wt_int(loop_w+nw_in*(loop_th-1)) = (dom_local/3d0)*(dth_local/3d0)* &
+                             wt_simp(loop_w+nw_in*(loop_th-1))
+  dum_v(loop_w+nw_in*(loop_th-1))  = dum_S(loop_w+nw_in*(loop_th-1))* &
+                             (om_in(loop_w)**mom)
+ end do
+end do
+
+! if (idl.ne.0) then
+!  write(idl,*) '                         wt_int=', wt_int(1), '->', wt_int(nw_in*nth_in)
+!  write(idl,*) '                         v=', dum_v(1), '->', dum_v(nw_in*nth_in)
+! end if
+
+
+fn_SpecMoment   = dot_product(wt_int,dum_v)
+
+! wt_simp(1)     = 1d0
+! wt_simp(nw_in) = 1d0
+!
+! do loop_w=2,nw_in-1,2
+!  wt_simp(loop_w) = 4d0
+! end do
+!
+! do loop_w=3,nw_in-1,2
+!  wt_simp(loop_w) = 2d0
+! end do
+
+!! if (idl.ne.0) then
+!!  write(idl,*) '--> wt_simp', wt_simp(1), '->', wt_simp(nw_in)
+!! end if
+
+! do loop_w=1,nw_in
+!  wt_int(loop_w) = (dom_local/3d0)*wt_simp(loop_w)
+! end do
+
+!! if (idl.ne.0) then
+!!  write(idl,*) '--> wt_int', wt_int(1), '->', wt_int(nw_in)
+!! end if
+
+! fn_SpecMoment   = dot_product(wt_int,dum_S*(om_in**mom))
+
+! if (idl.ne.0) then
+!  write(idl,*) '... exiting fn_SpecMoment ', fn_SpecMoment
+! end if
+
+end function fn_SpecMoment
+
+!=======================================================================
+
 
 !=======================================================================
 
