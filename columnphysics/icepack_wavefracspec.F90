@@ -34,9 +34,6 @@
       use icepack_tracers, only: nt_fsd
       use icepack_warnings, only: warnstr, icepack_warnings_add,  icepack_warnings_aborted
       use icepack_fsd
-      ! noah day wim 001 -------------------------------------------------------------
-            use icepack_floe
-      !-------------------------------------------------------------------------------
 
 
       implicit none
@@ -476,13 +473,6 @@
       do j = 1, nx
          X(j)= j*dx
       end do
-
-      ! Noah Day WIM 008 -------------------------------
-    !  do j = 1, nx
-    !     spec_efreq = spec_efreq*(1/j)
-      !end do
-      !fn_Attn_MBK(wavefreq)
-      ! ------------------------------------------------
 
       ! dispersion relation
       lambda (:) = gravit/(c2*pi*wavefreq (:)**2)
