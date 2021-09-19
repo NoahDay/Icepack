@@ -39,7 +39,7 @@
          c16  = 16.0_dbl_kind, &
          c20  = 20.0_dbl_kind, &
          c25  = 25.0_dbl_kind, &
-         c30  = 30.0_dbl_kind, & ! noah day wim
+         c30  = 30.0_dbl_kind, & ! Noah Day WIM
          c100 = 100.0_dbl_kind, &
          c180 = 180.0_dbl_kind, &
          c1000= 1000.0_dbl_kind, &
@@ -293,7 +293,8 @@
          wave_spec = .false.          ! if true, use wave forcing
 
       character (len=char_len), public :: &
-         wave_spec_type = 'constant'  ! 'none', 'constant', or 'random'
+         wave_spec_type = 'profile'  ! 'none', 'constant', or 'random'
+         ! Noah Day WIM, previously was 'constant'
 
 !-----------------------------------------------------------------------
 ! Parameters for melt ponds
