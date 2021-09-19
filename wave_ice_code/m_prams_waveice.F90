@@ -25,7 +25,7 @@
 
  ! BASIC PARAMS
 
- real(kind=8), parameter  :: pi = 3.141592653589793d0 ! noah day wim commenting out
+ real(kind=8), parameter  :: pi = 3.141592653589793d0
 
  real(kind=8), parameter  :: gravity = 9.81d0               ! gravity
  real(kind=8), parameter  :: water_density = 1025d0         ! water density
@@ -33,8 +33,9 @@
  real(kind=8), parameter  :: reldens = 0.9d0                ! ice density/fluid density
 
  ! NUMERICAL PARAMS
+ integer, parameter       :: WIM=1 		                ! waves in ice, (0 = off, 1 = on)
 
- integer, parameter       :: cmt=0 			                ! `write' parameter
+ integer, parameter       :: cmt=0 		                ! `write' parameter
 
  integer, parameter       :: do_coupled=0                   ! attn/floe size coupled?
 
