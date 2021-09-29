@@ -28,7 +28,18 @@
         use icepack_warnings, only: warnstr, icepack_warnings_add,  icepack_warnings_aborted
         use ice_domain_size, only: ncat, nfsd, nfreq
 !use ice_state ! noah day wim 004
-        use ice_fileunits, only: nu_diag
+        !use ice_constants
+        use ice_fileunits
+        use ice_read_write
+        use ice_restart_shared, only: lenstr, restart_dir, restart_file, &
+                               pointer_file, runtype
+        use ice_communicate, only: my_task, master_task
+        use ice_exit, only: abort_ice
+        use m_prams_waveice, only: waveicedatadir, fname_ww3, WAVE_METH, ww3_lat, ww3_lon, &
+       ww3_dir, ww3_tm, ww3_swh, ww3_fp, ATTEN_METH, ATTEN_MODEL, attn_fac, do_coupled, &
+       OVERWRITE_DIRS, ww3_dir_full, ww3_swh_full, ww3_fp_full, nww3_dt
+       !use netcdf
+       use ice_constants, only: eps1, eps3
 !
 !EOP
 !
@@ -261,19 +272,19 @@ end subroutine init_floe_0
 
 !!! Define attenuation coefficient coefficients
 
-!	 if (ATTEN_MODEL.eq.1) then
-!	  write(nu_diag,*) 'opening: ', waveicedatadir , fname_alp, '...'
+	 if (ATTEN_MODEL.eq.1) then
+	  write(nu_diag,*) 'opening: ', waveicedatadir , fname_alp, '...'
 
-!	  open(newunit=idd_alp,file=waveicedatadir // fname_alp)
-!	  do lp_j=1,Ncheb_h+1
-!	   do lp_i=1,Ncheb_f+1
-!		read(idd_alp,*) dum_alp
-	!	alp_coeffs(lp_i,lp_j)=dum_alp
-	 !  end do
-	 ! end do
-	 ! close(idd_alp)
-	 ! write(nu_diag,*) '... done'
-	! endif
+	  open(newunit=idd_alp,file=waveicedatadir // fname_alp)
+	  do lp_j=1,Ncheb_h+1
+	   do lp_i=1,Ncheb_f+1
+		read(idd_alp,*) dum_alp
+		alp_coeffs(lp_i,lp_j)=dum_alp
+	   end do
+	  end do
+	  close(idd_alp)
+	  write(nu_diag,*) '... done'
+	 endif
 
 
 
@@ -311,6 +322,8 @@ end subroutine init_floe_0
 
        j = dum_wavemask
 
+       !      loc_mwd(:,j)    = pi/6d0   !    initialise
+
        ! A0. initialise with: Bretschneider
        do i=1,nx_block
         if (tmask(i,j)) then
@@ -341,20 +354,19 @@ end subroutine init_floe_0
          do lp_i=1,nw_in
           S_init_in(lp_i) = SDF_Bretschneider(om_in(lp_i),0,loc_swh(i,j),loc_ppd(i,j))
          end do
-
          ! want consistency between SWH definitions:
-         !if (i.eq.1.and.cmt.ne.0) then
+         if (i.eq.1.and.cmt.ne.0) then
 
-         if (cmt.ne.0) then
+         !if (cmt.ne.0) then
             write(nu_diag,*) '                      -> check: swh ', loc_swh(i,j)
             write(nu_diag,*) '                      ->        ppd ', loc_ppd(i,j)
             dum_sm0        = fn_SpecMoment(S_init_in,nw_in,nth_in,om_in,th_in,0,nu_diag)
-   	     dum_sm2        = fn_SpecMoment(S_init_in,nw_in,nth_in,om_in,th_in,2,nu_diag)
+   	        dum_sm2        = fn_SpecMoment(S_init_in,nw_in,nth_in,om_in,th_in,2,nu_diag)
             write(nu_diag,*) '                      ->        swh ', 4d0*(dum_sm0**0.5d0)
             write(nu_diag,*) '                      ->        ppd ', &
                  											2d0*pi*((dum_sm0/dum_sm2)**0.5d0)
-        endif ! cmt
-         !endif ! END COMMENT
+        !endif ! cmt
+         endif ! END COMMENT
 
           ! A1. Use WIM to update wave spectrum and floe sizes
 
@@ -367,13 +379,11 @@ end subroutine init_floe_0
            write(nu_diag,*) '                      -> mwd   =', 180d0*mwd_row(i)/pi
     	     endif
     	     if (do_coupled.ne.0) then
-    	      !call sub_Balance(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j), &
- 		  !nw_in,nth_in,om_in,th_in,k_wtr_in,S_init_in,wspec_row_hld(i,:),tmt(i),nu_diag)
+    	      call sub_Balance(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j), &
+ 		  nw_in,nth_in,om_in,th_in,k_wtr_in,S_init_in,wspec_row_hld(i,:),tmt(i),nu_diag)
  		 else
  		  call sub_Uncoupled(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j), &
  		  nw_in,nth_in,om_in,th_in,k_wtr_in,S_init_in,wspec_row_hld(i,:),tmt(i),nu_diag)
-      !call sub_Uncoupled(Length_cell, hice_init, aice_in, &
-      !  nfreq,nthh,dwavefreq,wave_spectrum_in,wave_spectrum_out,tmtt,nu_diag)
  		 endif
  		 ifloe(i,j) = D1
  		endif ! ENDIF ws_tol
@@ -432,8 +442,6 @@ end subroutine init_floe_0
          tmt_hld(nx_block)     = 0
         endif
  	  endif ! END IF TMASK
-
-! ======
 
   ! RH Boundary:
     i=nx_block
@@ -601,13 +609,11 @@ end subroutine init_floe_0
         !print*, '                      -> mwd      =', 180d0*mwd_row(i)/pi
        endif  ! ENDIF if (cmt.ne.0) then
        if (do_coupled.ne.0) then
-         !call sub_Balance(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j),nw_in,&
-          !nth_in,om_in,th_in,k_wtr_in,wspec_row(i,:),wspec_row_hld(i,:),tmt(i),nu_diag)
+         call sub_Balance(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j),nw_in,&
+          nth_in,om_in,th_in,k_wtr_in,wspec_row(i,:),wspec_row_hld(i,:),tmt(i),nu_diag)
        else
          call sub_Uncoupled(ifloe(i,j),D1,Lcell(i,j),vfice(i,j),afice(i,j),nw_in,&
           nth_in,om_in,th_in,k_wtr_in,wspec_row(i,:),wspec_row_hld(i,:),tmt(i),nu_diag)
-          !call sub_Uncoupled(Length_cell, hice_init, aice_in, &
-          !  nfreq,nthh,dwavefreq,wave_spectrum_in,wave_spectrum_out,tmtt,nu_diag)
        endif ! ENDIF (do_coupled.ne.0)
        !print*, '... done wave-ice routine'
        ifloe(i,j) = D1
@@ -804,142 +810,156 @@ end subroutine init_floe_0
       end subroutine increment_floe
 
 !=======================================================================
-
-function fn_Attn_MBK(dum_om)
+!---! these subroutines write/read Fortran unformatted data files ..
+!=======================================================================
+!
+!BOP
+!
+! !IROUTINE: write_restart_floe - dumps all fields required for restart
+!
+! !INTERFACE:
+!
+      subroutine write_restart_floe(filename_spec)
+!
+! !DESCRIPTION:
+!
+! Dumps all values needed for restarting
+!
+! !REVISION HISTORY:
+!
+! author Elizabeth C. Hunke, LANL
 !
 ! !USES:
 !
-! !INPUT PARAMETERS:
+      use ice_domain_size
+      use ice_calendar, only: msec, mmonth, mday, myear, istep1, &
+                              timesecs, idate, year_init ! Noah Day WIM, removed , time_forc
+      use ice_state
 !
-
-!real(kind=8), intent (in) :: dum_om        ! ang freq
-real(kind=dbl_kind), intent (in), dimension(25) :: dum_om        ! ang freq
-
+! !INPUT/OUTPUT PARAMETERS:
 !
-! !OUTPUT PARAMETERS
-!
+      character(len=char_len_long), intent(in), optional :: filename_spec
 
-real(kind=dbl_kind), dimension(25) :: fn_Attn_MBK
-
-!
 !EOP
 !
+      integer (kind=int_kind) :: &
+          i, j, k, n, it, iblk, & ! counting indices
+          iyear, imonth, iday     ! year, month, day
 
-real(kind=8), parameter :: beta0 = 5.376168295200780E-005, &
-   beta1 = 2.947870279251530E-005
+      character(len=char_len_long) :: filename
 
-fn_Attn_MBK = beta0*(dum_om**2) + beta1*(dum_om**4)
+      logical (kind=log_kind) :: diag
 
-!fn_Attn_MBK = attn_fac*fn_Attn_MBK
+      ! construct path/file
+      if (present(filename_spec)) then
+         filename = trim(filename_spec)
+      else
+         iyear = myear + year_init - 1
+         imonth = mmonth
+         iday = mday
 
-end function fn_Attn_MBK
+         write(filename,'(a,a,a,i4.4,a,i2.2,a,i2.2,a,i5.5)') &
+              restart_dir(1:lenstr(restart_dir)), &
+              restart_file(1:lenstr(restart_file)),'.floe.', &
+              iyear,'-',mmonth,'-',mday,'-',msec
+      end if
 
-!=======================================================================
+      ! begin writing restart data
+      !call ice_open(nu_dump_floe,filename,0)
 
-!!!!!!!!!!!!!!!!!!!!!
-!!! fn_SpecMoment !!!
-!!!!!!!!!!!!!!!!!!!!!
+      if (my_task == master_task) then
+        !write(nu_dump_floe) istep1,timesecs!,time_forc
+        write(nu_diag,*) 'Writing ',filename(1:lenstr(filename))
+      endif
+
+      diag = .true.
+
+      !-----------------------------------------------------------------
+
+      do n = 1, ncat
+         !call ice_write(nu_dump_floe,0,trcrn(:,:,nt_fsd,n,:),'ruf8',diag)
+      enddo
+
+      !if (my_task == master_task) close(nu_dump_floe)
+
+      end subroutine write_restart_floe
 
 !=======================================================================
 !BOP
 !
-! !ROUTINE: fn_SpecMoment
-!
-! !DESCRIPTION:
-!
-!  blah blah blah
-!
-! !REVISION HISTORY: same as module
+! !IROUTINE: read_restart_floe - reads all fields required for restart
 !
 ! !INTERFACE:
 !
-
-function fn_SpecMoment(dum_S, nw_in, nth_in, om_in, mom, idl)
-
+      subroutine read_restart_floe(filename_spec)
+!
+! !DESCRIPTION:
+!
+! Reads all values needed for an ice floe restart
+!
+! !REVISION HISTORY:
+!
+! author S O'Farrell
 !
 ! !USES:
 !
+      use ice_domain_size
+      use ice_calendar, only: msec, mmonth, mday, myear, istep1, &
+                              timesecs, idate, year_init ! Noah Day WIM, removed , time_forc
+      use ice_state
 !
-! !INPUT PARAMETERS:
+! !INPUT/OUTPUT PARAMETERS:
 !
-integer, intent(in)                                :: nw_in, nth_in, mom, idl
-real (kind=8), dimension(nw_in), intent(in)        :: om_in
-!real (kind=8), dimension(nth_in), intent(in)       :: th_in
-real (kind=8), dimension(nw_in*nth_in), intent(in) :: dum_S
-!
-! !OUTPUT PARAMETERS
-!
-real (kind=8)                            :: fn_SpecMoment
-!
+      character(len=char_len_long), intent(in), optional :: filename_spec
+
 !EOP
 !
+      integer (kind=int_kind) :: &
+          i, j, k, n, it, iblk, & ! counting indices
+          iyear, imonth, iday     ! year, month, day
 
-integer                                  :: loop_w, loop_th
-real (kind=8), dimension(nw_in*nth_in)   :: wt_simp, wt_int
-real (kind=8), dimension(nw_in)          :: dum_simp
-real (kind=8), dimension(nth_in)         :: dum_simp_th
-real (kind=8), dimension(nw_in*nth_in)   :: dum_v
-real (kind=8)							  :: dom_local, dth_local
+      character(len=char_len_long) :: &
+         filename, filename0, string1, string2
 
-dom_local = om_in(2)-om_in(1)
-! Noah Day WIM,..
-!if (nth_in.eq.1) then
-! dth_local = 3d0         ! for Simpson's rule
-!else
-! dth_local = th_in(2)-th_in(1)
-!end if
-!-----
-! if (idl.ne.0) then
-!  write(idl,*) '                     --> into fn_SpecMoment...'
-!  write(idl,*) '                         nw=', nw_in
-!  write(idl,*) '                         th=', nth_in
-!  write(idl,*) '                         mom=', mom
-!  write(idl,*) '                         om=', om_in(1), '->', om_in(nw_in)
-!  write(idl,*) '                         th=', th_in(1), '->', th_in(nth_in)
-!  write(idl,*) '                         S=',  dum_S(1), '->', dum_S(nw_in*nth_in)
-!  write(idl,*) '                         dom=', dom_local
-!  write(idl,*) '                         dth=', dth_local
-! end if
+      logical (kind=log_kind) :: &
+         diag
 
-wt_int = c1
-dum_v = c1
+      if (my_task == master_task) then
+         open(nu_rst_pointer,file=pointer_file)
+         read(nu_rst_pointer,'(a)') filename0
+         filename = trim(filename0)
+         close(nu_rst_pointer)
 
-fn_SpecMoment   = dot_product(wt_int,dum_v)
+         ! reconstruct path/file
+         n = index(filename0,trim(restart_file))
+         if (n == 0) call abort_ice('ifloe restart: filename discrepancy')
+         string1 = trim(filename0(1:n-1))
+         string2 = trim(filename0(n+lenstr(restart_file):lenstr(filename0)))
+         write(filename,'(a,a,a,a)') &
+            string1(1:lenstr(string1)), &
+            restart_file(1:lenstr(restart_file)),'.floe.', &
+            string2(1:lenstr(string2))
+      endif ! master_task
 
-! wt_simp(1)     = 1d0
-! wt_simp(nw_in) = 1d0
-!
-! do loop_w=2,nw_in-1,2
-!  wt_simp(loop_w) = 4d0
-! end do
-!
-! do loop_w=3,nw_in-1,2
-!  wt_simp(loop_w) = 2d0
-! end do
+      !call ice_open(nu_restart_floe,filename,0)
 
-!! if (idl.ne.0) then
-!!  write(idl,*) '--> wt_simp', wt_simp(1), '->', wt_simp(nw_in)
-!! end if
+      if (my_task == master_task) then
+        !read(nu_restart_floe) istep1,timesecs!,time_forc
+        write(nu_diag,*) 'Reading ',filename(1:lenstr(filename))
+      endif
 
-! do loop_w=1,nw_in
-!  wt_int(loop_w) = (dom_local/3d0)*wt_simp(loop_w)
-! end do
+      diag = .true.
 
-!! if (idl.ne.0) then
-!!  write(idl,*) '--> wt_int', wt_int(1), '->', wt_int(nw_in)
-!! end if
+      !-----------------------------------------------------------------
 
-! fn_SpecMoment   = dot_product(wt_int,dum_S*(om_in**mom))
+      do n = 1, ncat
+         !call ice_read(nu_restart_floe,0,trcrn(:,:,nt_fsd,n,:),'ruf8',diag)
+      enddo
 
-! if (idl.ne.0) then
-!  write(idl,*) '... exiting fn_SpecMoment ', fn_SpecMoment
-! end if
+      !if (my_task == master_task) close(nu_restart_floe)
 
-end function fn_SpecMoment
+      end subroutine read_restart_floe
 
-!=======================================================================
-
-!=======================================================================
 
 end module icepack_floe
 
