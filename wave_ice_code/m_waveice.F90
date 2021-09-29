@@ -261,9 +261,9 @@
 
  L = 0  ! for test of incident spectrum
 
- !noah day wim, call sub_StrainSpec(S_init, Es)
-Es = 0
- !noah day wim, call sub_WavelenSpec(S_init, lam_init)
+ call sub_StrainSpec(S_init, Es)
+
+ call sub_WavelenSpec(S_init, lam_init)
 
  if (idl.ne.0.and.cmt.ne.0) then
   write(idl,*) '>>>>>>> INCIDENT SPECTRUM:'
