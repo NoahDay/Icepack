@@ -309,8 +309,8 @@ end subroutine init_floe_0
     	 tmt_hld(:)         = 1      ! flag to terminate routine
        wspec_row(:,:)     = c0     ! a dummy vector
        wspec_row_hld(:,:) = c0     ! a dummy dummy vector
-       mwd_hld(:,:)       = c0     ! another dummy dummy vector
-       !loc_mwd(:,:)       = c0     ! another dummy dummy vector
+       mwd_hld(:,:)       = c0     ! another dummy dummy vector, noah day uncommented
+       loc_mwd(:,:)       = c0     ! another dummy dummy vector
    	   S_init_in(:)       = c0
 
        !!! Begin at wavemask (only difference is initialisation)
@@ -322,7 +322,7 @@ end subroutine init_floe_0
 
        j = dum_wavemask
 
-       !      loc_mwd(:,j)    = pi/6d0   !    initialise
+        !     loc_mwd(:,j)    = pi/6d0   !    initialise, noah day uncommented
 
        ! A0. initialise with: Bretschneider
        do i=1,nx_block
@@ -335,7 +335,7 @@ end subroutine init_floe_0
           write(nu_diag,*) '                         i, j = ', i, j
           write(nu_diag,*) '                         NOT running wave-ice routine'
           write(nu_diag,*) '                      -> sig wave ht <', ws_tol
-          !write(nu_diag,*) '<<<---------------------------------------------<<<'
+          write(nu_diag,*) '<<<---------------------------------------------<<<'
          endif
          tmt(i) = 1
          if (afice(i,j).lt.tolice.or.vfice(i,j).lt.tolh) then
