@@ -310,7 +310,6 @@ end subroutine init_floe_0
        wspec_row(:,:)     = c0     ! a dummy vector
        wspec_row_hld(:,:) = c0     ! a dummy dummy vector
        mwd_hld(:,:)       = c0     ! another dummy dummy vector, noah day uncommented
-       !loc_mwd(:,:)       = c0     ! another dummy dummy vector
    	   S_init_in(:)       = c0
 
        !!! Begin at wavemask (only difference is initialisation)
