@@ -86,15 +86,15 @@
  real(kind=8), allocatable             :: ww3_lat(:,:), ww3_lon(:,:), ww3_tm(:,:)
  real(kind=8), allocatable             :: ww3_swh(:,:), ww3_fp(:,:), ww3_dir(:,:), &
  				ww3_swh_full(:,:,:), ww3_fp_full(:,:,:), ww3_dir_full(:,:,:)
- integer, parameter                    :: nww3_dt = 2 ! ww3 time step relative to cice
+ integer, parameter                    :: nww3_dt = 1 ! ww3 time step relative to cice
 
  ! DATA
 
- character(70)            :: waveicedatadir='/Users/noahday/github/cice-dirs/input/CICE_data/forcing/gx1'!19 '../../waveice_data/'
+ character(100)            :: waveicedatadir='/Users/noahday/github/cice-dirs/input/CICE_data/forcing/gx1/CAWCR/MONTHLY/2005'!19 '../../waveice_data/'
  character(10)            :: fname_alp='alp_coeffs'
  !character(24)            :: fname_ww3='waves/ww3.197803_full.nc'
- character(14)            :: fname_ww3='ww3_200501_gx1'!'waves/ww3.1978'
- integer, parameter       :: OVERWRITE_DIRS = 0   ! overwrite wave directions with usr set ones (0=no,1=yes)
+ character(14)            :: fname_ww3='ww3_2005'!'waves/ww3.1978'
+ integer, parameter       :: OVERWRITE_DIRS = 1   ! overwrite wave directions with usr set ones (0=no,1=yes)
 
 !=======================================================================
 
