@@ -313,19 +313,37 @@
                  (hicen_init(n+1) - hicen_init(n))
               hbnew(n) = hin_max(n) + dhicen(n) &
                       + slope * (hin_max(n) - hicen_init(n))
+                      !Noah Day WIM-------
+                      !write(warnstr,*) subname, &
+                      !   'ITD Thermodynamics: hicen_init(n+1) > hicen_init(n)'
+                       !call icepack_warnings_add(warnstr)
+                       !write(warnstr,*) 'category, hicen_init(n), hicen_init(n+1): ', n, hicen_init(n),hicen_init(n+1)
+                       !call icepack_warnings_add(warnstr)
+                       !write(warnstr,*) 'hicen_init: ', hicen_init
+                       !call icepack_warnings_add(warnstr)
 
-                ! Noah Day WIM -----
-                !write(*,*) subname, &
-                !   'ITD Thermodynamics: hicen_init(n+1) <= hicen_init(n)'
-                !call icepack_warnings_setabort(.true.)
-                !call icepack_warnings_add(warnstr)
-                ! -------------------
-
+                      !----------
             else
 
+              !write(warnstr,*) subname, &
+              !   'ITD Thermodynamics: hicen_init(n+1) <= hicen_init(n)'
+              call icepack_warnings_setabort(.true.)
+              !
+              !Noah Day WIM-------
+              !call icepack_warnings_add('ITD Thermodynamics: hicen_init(n+1) <= hicen_init(n)')
+              !call icepack_warnings_add(hicen_init(n+1))
+              !call icepack_warnings_add(hicen_init(n))
               write(warnstr,*) subname, &
                  'ITD Thermodynamics: hicen_init(n+1) <= hicen_init(n)'
-              call icepack_warnings_setabort(.true.)
+               call icepack_warnings_add(warnstr)
+               write(warnstr,*) 'category, hicen_init(n), hicen_init(n+1): ', n, hicen_init(n),hicen_init(n+1)
+               call icepack_warnings_add(warnstr)
+               write(warnstr,*) 'hicen_init: ', hicen_init
+              call icepack_warnings_add(warnstr)
+               write(warnstr,*) 'ncat: ', ncat
+
+
+              !----------
               call icepack_warnings_add(warnstr)
 
             endif
@@ -2141,6 +2159,15 @@
       !-----------------------------------------------------------------
 
          if (aice > puny) then
+           !Noah Day WIM-------
+          ! write(warnstr,*) subname, &
+          !    'Before linear_itd'
+          !  call icepack_warnings_add(warnstr)
+          !       write(warnstr,*) ' vicen_init: ', vicen_init
+          !       call icepack_warnings_add(warnstr)
+          !       write(warnstr,*) ' aicen_init: ', aicen_init
+          !       call icepack_warnings_add(warnstr)
+           ! ----------------
 
             call linear_itd (ncat,     hin_max,        &
                              nilyr,    nslyr,          &
@@ -2157,6 +2184,15 @@
                              aice      ,         &
                              aice0     ,         &
                              fpond       )
+                 !Noah Day WIM-------
+                ! write(warnstr,*) subname, &
+                !    'Before linear_itd'
+                !  call icepack_warnings_add(warnstr)
+                !  write(warnstr,*) ' vicen_init: ', vicen_init
+                !  call icepack_warnings_add(warnstr)
+                !  write(warnstr,*) ' aicen_init: ', aicen_init
+                !  call icepack_warnings_add(warnstr)                 ! n
+                 ! ----------------
             if (icepack_warnings_aborted(subname)) return
 
          endif ! aice > puny
