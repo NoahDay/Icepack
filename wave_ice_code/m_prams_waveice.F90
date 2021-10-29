@@ -39,7 +39,7 @@
 
  integer, parameter       :: do_coupled=0                   ! attn/floe size coupled?
 
- integer, parameter       :: Wsq_METH=1                     ! strain method
+ integer, parameter       :: Wsq_METH=0                     ! strain method
  															! 0 => W=1
  															! 1 => W=k_ice/k_wtr
  integer, parameter       :: ATTEN_METH=0                   ! attenuation method (0=Av,1=int)
@@ -90,11 +90,12 @@
 
  ! DATA
 
- character(100)            :: waveicedatadir='/Users/noahday/github/cice-dirs/input/CICE_data/forcing/gx1/CAWCR/MONTHLY/2005'!19 '../../waveice_data/'
+ character(100)            :: waveicedatadir='/home/cawcr_data/gx1/2005'!19 '../../waveice_data/'
  character(10)            :: fname_alp='alp_coeffs'
  !character(24)            :: fname_ww3='waves/ww3.197803_full.nc'
  character(14)            :: fname_ww3='ww3_2005'!'waves/ww3.1978'
  integer, parameter       :: OVERWRITE_DIRS = 1   ! overwrite wave directions with usr set ones (0=no,1=yes)
+ integer, parameter       :: WIM_BREAKUP = 0   ! use the WIM breakup method (0=no,1=yes)
 
 !=======================================================================
 

@@ -146,7 +146,7 @@
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  if (conc.lt.tolice.or.hice.lt.tolh) then
-  floe_sz_max = floe_sz_pancake
+  !Noah Day 25/10 floe_sz_max = floe_sz_pancake
   do lp_i=1,nw
    S_attn_out(lp_i) = dum_S_init(lp_i)
   end do
@@ -261,7 +261,11 @@
 
  L = 0  ! for test of incident spectrum
 
+if (WIM_BREAKUP.eq.1) then
  call sub_StrainSpec(S_init, Es)
+else
+  Es = 0d0
+end if
 
  call sub_WavelenSpec(S_init, lam_init)
 
@@ -270,7 +274,7 @@
   write(idl,*) 'S_init   = ', S_init(1), '->', S_init(nw*nth)
   call sub_StrainSpec(S_init, Es_init)
   write(idl,*) 'lam_init = ', lam_init
-  !noah day wim, write(idl,*) 'Es_init  = ', Es_init
+  !write(idl,*) 'Es_init  = ', Es_init
  end if
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -282,7 +286,7 @@
 
  L = Lcell ! initialise propagation length
 
- floe_sz_max = floe_sz_init
+ !Noah Day 25/10 floe_sz_max = floe_sz_init
 
  do lp_i=1,nw
   alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0
@@ -313,13 +317,14 @@
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- L = Lcell ! initialise propagation length
+!Noah Day 25/10  L = Lcell ! initialise propagation length
 
- if (idl.ne.0.and.cmt.ne.0) then
-  write(idl,*) '>>>>>>> AT END OF CELL:'
+!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+!Noah Day 25/10   write(idl,*) '>>>>>>> AT END OF CELL:'
   !write(idl,*) 'D1 (init) = ', floe_sz_init, ': empirical breaking size = ', floe_sz_brk_emp
- end if
+ !Noah Day 25/10 end if
 
+! Propagation of wave spectrum
  do lp_i=1,nw
   alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.75d0
   do lp_j=1,nth
@@ -333,7 +338,11 @@
   write(idl,*) 'S_attn = ', S_attn(1), '->', S_attn(nw)
  end if
 
- call sub_StrainSpec(S_attn, Es)
+ if (WIM_BREAKUP.eq.1) then
+  call sub_StrainSpec(S_init, Es)
+ else
+   Es = 0d0
+ end if
 
  if (idl.ne.0.and.cmt.ne.0) then
   write(idl,*) 'Es = ', Es
@@ -345,50 +354,50 @@
  end do
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- if (floe_sz_brk_emp.gt.floe_sz_init) then  !!! floes already
+!Noah Day 25/10 if (floe_sz_brk_emp.gt.floe_sz_init) then  !!! floes already
  !!!                             smaller than breakage size
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  floe_sz_max = floe_sz_init
+  !Noah Day 25/10 floe_sz_max = floe_sz_init
   !tmt = 0
-  if (idl.ne.0.and.cmt.ne.0) then
-   write(idl,*) '>>>>>>> RESULT:'
-   write(idl,*) '                       --> Breakage occurs: location inconsequential'
-   write(idl,*) '                           initial floe size', floe_sz_init, '<', &
-      											floe_sz_brk_emp
-   write(idl,*) '                           tmt =', tmt
-   write(idl,*) '                   floe_sz_max =', floe_sz_max
+!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+!Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
+!Noah Day 25/10   write(idl,*) '                       --> Breakage occurs: location inconsequential'
+!Noah Day 25/10   write(idl,*) '                           initial floe size', floe_sz_init, '<', &
+!Noah Day 25/10      											floe_sz_brk_emp
+!Noah Day 25/10   write(idl,*) '                           tmt =', tmt
+!Noah Day 25/10   write(idl,*) '                   floe_sz_max =', floe_sz_max
 !   write(idl,*) '<<<---------------------------------------------<<<'
-  end if
+!Noah Day 25/10  end if
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- elseif (Es.ge.epsc*sqrt(-2/log(Pc))) then   !!! waves strong
+!Noah Day 25/10 elseif (Es.ge.epsc*sqrt(-2/log(Pc))) then   !!! waves strong
  !!!                   enough to break ice at end of cell
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  floe_sz_max = floe_sz_brk_emp
+!Noah Day 25/10   floe_sz_max = floe_sz_brk_emp
   !tmt = 0
-  if (idl.ne.0.and.cmt.ne.0) then
-   write(idl,*) '>>>>>>> RESULT:'
-   write(idl,*) '                       --> Breakage occurs at end of cell',L/1000d0,'km'
-   write(idl,*) '                           tmt =', tmt
-   write(idl,*) '                   floe_sz_max =', floe_sz_max
+!Noah Day 25/10   if (idl.ne.0.and.cmt.ne.0) then
+!Noah Day 25/10    write(idl,*) '>>>>>>> RESULT:'
+!Noah Day 25/10    write(idl,*) '                       --> Breakage occurs at end of cell',L/1000d0,'km'
+!Noah Day 25/10    write(idl,*) '                           tmt =', tmt
+!Noah Day 25/10    write(idl,*) '                   floe_sz_max =', floe_sz_max
 !   write(idl,*) '<<<---------------------------------------------<<<'
-  end if
+!Noah Day 25/10   end if
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- else        !!! search for point at which waves can break ice
+!Noah Day 25/10 else        !!! search for point at which waves can break ice
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  Lc = zero(i0,Lcell,toli,toli,fn_proplng_uncoupled)
-  L           = Lc
-  floe_sz_max = (Lc*floe_sz_brk_emp + (Lcell-Lc)*floe_sz_init)/Lcell
-  tmt         = 1   ! waves attenuated (in all liklihood)
-  if (idl.ne.0.and.cmt.ne.0) then
-   write(idl,*) '>>>>>>> RESULT:'
-   write(idl,*) '                      --> Breakage occurs within cell ', &
-   Lc/1000d0,'km' !, '(zero chk: ', fn_proplng_uncoupled(Lc),')'
-   write(idl,*) '                          tmt =', tmt
-   write(idl,*) '                  floe_sz_max =', floe_sz_max
+  !Noah Day 25/10 Lc = zero(i0,Lcell,toli,toli,fn_proplng_uncoupled)
+  !Noah Day 25/10 L           = Lc
+  !Noah Day 25/10 floe_sz_max = (Lc*floe_sz_brk_emp + (Lcell-Lc)*floe_sz_init)/Lcell
+  !Noah Day 25/10 tmt         = 1   ! waves attenuated (in all liklihood)
+!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+!Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
+!Noah Day 25/10   write(idl,*) '                      --> Breakage occurs within cell ', &
+!Noah Day 25/10   Lc/1000d0,'km' !, '(zero chk: ', fn_proplng_uncoupled(Lc),')'
+!Noah Day 25/10   write(idl,*) '                          tmt =', tmt
+!Noah Day 25/10   write(idl,*) '                  floe_sz_max =', floe_sz_max
 !   write(idl,*) '<<<---------------------------------------------<<<'
-  end if
+!Noah Day 25/10  end if
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- end if ! (Es.ge.epsc*sqrt(-2/log(Pc)))
+ !Noah Day 25/10end if ! (Es.ge.epsc*sqrt(-2/log(Pc)))
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
