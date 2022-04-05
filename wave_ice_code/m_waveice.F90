@@ -74,7 +74,7 @@
 ! !INTERFACE:
 !
 
- subroutine sub_Uncoupled(floe_sz_init,floe_sz_max,Lcell,dum_hice,dum_conc, &
+ subroutine sub_Uncoupled(Lcell,dum_hice,dum_conc, &
   dum_nw,dum_nth,dum_om,dum_th,dum_k_wtr,dum_S_init,S_attn_out,tmt,idl)
 
 !
@@ -84,7 +84,6 @@
 !
 
  integer, intent(in)                             :: idl
- real(kind=8), intent(in)            	 :: floe_sz_init          ! initial max floe size
  real(kind=8), intent(in)                 :: Lcell
  real(kind=8), intent(in)                 :: dum_hice,dum_conc     ! cell length, ice thick & con
 
@@ -95,13 +94,12 @@
 !
 ! !OUTPUT:
 !
- real(kind=8), intent(out)          		   :: floe_sz_max     ! max floe size
+
  real(kind=8), dimension(dum_nw), intent(out)  :: S_attn_out
  integer, intent(out)                          :: tmt             ! flag to terminate routine
 !
 !EOP
 !
-
  ! Numerical params:
 
  integer                      :: lp_i, lp_j
@@ -124,7 +122,6 @@
 !  write(idl,*) '>>>--------------------------------------------->>>'
   write(idl,*) '        sub_Uncoupled  -->  h  = ',dum_hice
   write(idl,*) '                       -->  c  = ',dum_conc
-  write(idl,*) '                       -->  Di = ',floe_sz_init
   write(idl,*) '                       -->  L  = ',Lcell/1000d0,'km'
  end if
 
@@ -146,7 +143,7 @@
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  if (conc.lt.tolice.or.hice.lt.tolh) then
-  !Noah Day 25/10 floe_sz_max = floe_sz_pancake
+
   do lp_i=1,nw
    S_attn_out(lp_i) = dum_S_init(lp_i)
   end do
@@ -159,7 +156,7 @@
     write(idl,*) '                       --> no ice in this cell: c<', tolice
    end if
   write(idl,*) '                           tmt =', tmt
-  write(idl,*) '                   floe_sz_max =', floe_sz_max
+  !write(idl,*) '                   floe_sz_max =', floe_sz_max
 !   write(idl,*) '<<<---------------------------------------------<<<'
   end if
 
@@ -272,7 +269,7 @@ end if
  if (idl.ne.0.and.cmt.ne.0) then
   write(idl,*) '>>>>>>> INCIDENT SPECTRUM:'
   write(idl,*) 'S_init   = ', S_init(1), '->', S_init(nw*nth)
-  call sub_StrainSpec(S_init, Es_init)
+!  call sub_StrainSpec(S_init, Es_init) Noah Day 26/03/22
   write(idl,*) 'lam_init = ', lam_init
   !write(idl,*) 'Es_init  = ', Es_init
  end if
@@ -305,7 +302,7 @@ end if
   write(idl,*) '                      --> S_init isnt strong enough to break ice: ', &
    Es, epsc*sqrt(-2/log(Pc))
   write(idl,*) '                          tmt =', tmt
-  write(idl,*) '                  floe_sz_max =', floe_sz_max
+  !write(idl,*) '                  floe_sz_max =', floe_sz_max
 !   write(idl,*) '<<<---------------------------------------------<<<'
  end if
 
@@ -326,7 +323,7 @@ end if
 
 ! Propagation of wave spectrum
  do lp_i=1,nw
-  alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.75d0
+  alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0 ! Noah Day changed from 0.75
   do lp_j=1,nth
    S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
      exp(-alpha(lp_i)*cos(th(lp_j))*L)

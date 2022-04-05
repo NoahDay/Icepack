@@ -90,10 +90,10 @@
 
  ! DATA
 
- character(100)            :: waveicedatadir='/Users/noahday/GitHub/cice-dirs/input/CICE_data/forcing/gx1/CAWCR/MONTHLY'!19 '../../waveice_data/'
+ character(100)           :: waveicedatadir='/Users/noahday/GitHub/cice-dirs/input/CICE_data/forcing/gx1/CAWCR/MONTHLY'!19 '../../waveice_data/'
  character(10)            :: fname_alp='alp_coeffs'
  !character(24)            :: fname_ww3='waves/ww3.197803_full.nc'
- character(3)            :: fname_ww3='ww3_'!'waves/ww3.1978'
+ character(3)             :: fname_ww3='ww3_'!'waves/ww3.1978'
  integer, parameter       :: OVERWRITE_DIRS = 0   ! overwrite wave directions with usr set ones (0=no,1=yes), set MWD to pi
  integer, parameter       :: WIM_BREAKUP = 0   ! use the WIM breakup method (0=no,1=yes)
  integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=no,1=yes)
