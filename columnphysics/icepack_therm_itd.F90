@@ -2159,15 +2159,6 @@
       !-----------------------------------------------------------------
 
          if (aice > puny) then
-           !Noah Day WIM-------
-          ! write(warnstr,*) subname, &
-          !    'Before linear_itd'
-          !  call icepack_warnings_add(warnstr)
-          !       write(warnstr,*) ' vicen_init: ', vicen_init
-          !       call icepack_warnings_add(warnstr)
-          !       write(warnstr,*) ' aicen_init: ', aicen_init
-          !       call icepack_warnings_add(warnstr)
-           ! ----------------
 
             call linear_itd (ncat,     hin_max,        &
                              nilyr,    nslyr,          &
@@ -2184,15 +2175,7 @@
                              aice      ,         &
                              aice0     ,         &
                              fpond       )
-                 !Noah Day WIM-------
-                ! write(warnstr,*) subname, &
-                !    'Before linear_itd'
-                !  call icepack_warnings_add(warnstr)
-                !  write(warnstr,*) ' vicen_init: ', vicen_init
-                !  call icepack_warnings_add(warnstr)
-                !  write(warnstr,*) ' aicen_init: ', aicen_init
-                !  call icepack_warnings_add(warnstr)                 ! n
-                 ! ----------------
+
             if (icepack_warnings_aborted(subname)) return
 
          endif ! aice > puny

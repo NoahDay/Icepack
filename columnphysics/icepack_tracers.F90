@@ -92,7 +92,8 @@
          nt_bgc_PON   = 0, & ! zooplankton and detritus
          nt_bgc_hum   = 0, & ! humic material
          nt_zbgc_frac = 0, & ! fraction of tracer in the mobile phase
-         nt_bgc_S     = 0    ! Bulk salinity in fraction ice with dynamic salinity (Bio grid)
+         nt_bgc_S     = 0, &    ! Bulk salinity in fraction ice with dynamic salinity (Bio grid)
+         nt_pan       = 0    ! ND: adding pancake ice tracer
 
       logical (kind=log_kind), public :: &
          tr_iage      = .false., & ! if .true., use age tracer
@@ -105,7 +106,8 @@
          tr_iso       = .false., & ! if .true., use isotope tracers
          tr_aero      = .false., & ! if .true., use aerosol tracers
          tr_brine     = .false., & ! if .true., brine height differs from ice thickness
-         tr_fsd       = .false.    ! if .true., use floe size distribution
+         tr_fsd       = .false., &   ! if .true., use floe size distribution
+         tr_pan       = .false.    ! ND: adding pancake ice tracer
 
       !-----------------------------------------------------------------
       !  biogeochemistry

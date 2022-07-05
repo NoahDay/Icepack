@@ -107,7 +107,7 @@
 
       integer (kind=int_kind) :: ntrcr
       logical (kind=log_kind) :: tr_iage, tr_FY, tr_lvl, tr_pond
-      logical (kind=log_kind) :: tr_iso, tr_aero, tr_fsd
+      logical (kind=log_kind) :: tr_iso, tr_aero, tr_fsd, tr_pan !ND: adding pancake tracer
       logical (kind=log_kind) :: tr_pond_cesm, tr_pond_lvl, tr_pond_topo, wave_spec
       integer (kind=int_kind) :: nt_Tsfc, nt_sice, nt_qice, nt_qsno, nt_iage, nt_FY
       integer (kind=int_kind) :: nt_alvl, nt_vlvl, nt_apnd, nt_hpnd, nt_ipnd, &
@@ -176,7 +176,8 @@
         tr_pond_topo, &
         tr_aero,      &
         tr_fsd,       &
-        tr_iso
+        tr_iso,       &
+        tr_pan
 
       !-----------------------------------------------------------------
       ! query Icepack values
@@ -270,6 +271,7 @@
       tr_aero      = .false. ! aerosols
       tr_fsd       = .false. ! floe size distribution
       tr_iso       = .false. ! isotopes
+      tr_pan       = .false. !ND: adding pancake ice tracer
 
       !-----------------------------------------------------------------
       ! read from input file
@@ -625,6 +627,7 @@
          write(nu_diag,1010) ' tr_pond_topo              = ', tr_pond_topo
          write(nu_diag,1010) ' tr_aero                   = ', tr_aero
          write(nu_diag,1010) ' tr_fsd                    = ', tr_fsd
+         write(nu_diag,1010) ' tr_pan                    = ', tr_pan !ND: adding pancake ice tracer
 
          nt_Tsfc = 1           ! index tracers, starting with Tsfc = 1
          ntrcr = 1             ! count tracers, starting with Tsfc = 1
@@ -682,6 +685,8 @@
              nt_fsd = ntrcr + 1       ! floe size distribution
              ntrcr = ntrcr + nfsd
          end if
+
+         nt_pan = max_ntrcr           ! ND: pancake ice tracer 
 
          nt_isosno = max_ntrcr
          nt_isoice = max_ntrcr

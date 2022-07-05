@@ -33,7 +33,7 @@
  real(kind=8), parameter  :: reldens = 0.9d0                ! ice density/fluid density
 
  ! NUMERICAL PARAMS
- integer, parameter       :: WIM=1 		                ! waves in ice, (0 = off, 1 = on)
+ integer, parameter       :: WIM=0 		                ! waves in ice, (0 = off, 1 = on)
 
  integer, parameter       :: cmt=0 		                ! `write' parameter
 
