@@ -208,7 +208,7 @@
            tr_fsd_in, tr_aero_in, tr_iso_in, tr_brine_in, tr_zaero_in, &
            tr_bgc_Nit_in, tr_bgc_N_in, tr_bgc_DON_in, tr_bgc_C_in, tr_bgc_chl_in, &
            tr_bgc_Am_in, tr_bgc_Sil_in, tr_bgc_DMS_in, tr_bgc_Fe_in, tr_bgc_hum_in, &
-           tr_bgc_PON_in)
+           tr_bgc_PON_in, tr_pan_in) !ND: adding pancake ice
 
         logical, intent(in), optional :: &
              tr_iage_in      , & ! if .true., use age tracer
@@ -219,6 +219,7 @@
              tr_pond_lvl_in  , & ! if .true., use level-ice pond tracer
              tr_pond_topo_in , & ! if .true., use explicit topography-based ponds
              tr_fsd_in       , & ! if .true., use floe size distribution tracers
+             tr_pan_in       , & ! if .true., ND: adding pancake ice
              tr_iso_in       , & ! if .true., use isotope tracers
              tr_aero_in      , & ! if .true., use aerosol tracers
              tr_brine_in     , & ! if .true., brine height differs from ice thickness
@@ -247,6 +248,7 @@
         if (present(tr_pond_lvl_in) ) tr_pond_lvl  = tr_pond_lvl_in
         if (present(tr_pond_topo_in)) tr_pond_topo = tr_pond_topo_in
         if (present(tr_fsd_in)    ) tr_fsd     = tr_fsd_in
+        if (present(tr_pan_in)    ) tr_pan     = tr_pan_in ! ND: adding pancake ice
         if (present(tr_iso_in)    ) tr_iso     = tr_iso_in
         if (present(tr_aero_in)   ) tr_aero    = tr_aero_in
         if (present(tr_brine_in)  ) tr_brine   = tr_brine_in
@@ -275,7 +277,7 @@
            tr_fsd_out, tr_aero_out, tr_iso_out, tr_brine_out, tr_zaero_out, &
            tr_bgc_Nit_out, tr_bgc_N_out, tr_bgc_DON_out, tr_bgc_C_out, tr_bgc_chl_out, &
            tr_bgc_Am_out, tr_bgc_Sil_out, tr_bgc_DMS_out, tr_bgc_Fe_out, tr_bgc_hum_out, &
-           tr_bgc_PON_out)
+           tr_bgc_PON_out, tr_pan_out) ! ND: adding pancake ice
 
         logical, intent(out), optional :: &
              tr_iage_out      , & ! if .true., use age tracer
@@ -286,6 +288,7 @@
              tr_pond_lvl_out  , & ! if .true., use level-ice pond tracer
              tr_pond_topo_out , & ! if .true., use explicit topography-based ponds
              tr_fsd_out       , & ! if .true., use floe size distribution
+             tr_pan_out       , & ! if .true., ND: adding pancake ice
              tr_iso_out       , & ! if .true., use isotope tracers
              tr_aero_out      , & ! if .true., use aerosol tracers
              tr_brine_out     , & ! if .true., brine height differs from ice thickness
@@ -314,6 +317,7 @@
         if (present(tr_pond_lvl_out) ) tr_pond_lvl_out  = tr_pond_lvl
         if (present(tr_pond_topo_out)) tr_pond_topo_out = tr_pond_topo
         if (present(tr_fsd_out)    ) tr_fsd_out     = tr_fsd
+        if (present(tr_pan_out)    ) tr_pan_out     = tr_pan
         if (present(tr_iso_out)    ) tr_iso_out     = tr_iso
         if (present(tr_aero_out)   ) tr_aero_out    = tr_aero
         if (present(tr_brine_out)  ) tr_brine_out   = tr_brine
@@ -353,6 +357,7 @@
         write(iounit,*) "  tr_pond_lvl  = ",tr_pond_lvl 
         write(iounit,*) "  tr_pond_topo = ",tr_pond_topo
         write(iounit,*) "  tr_fsd     = ",tr_fsd
+        write(iounit,*) "  tr_pan     = ",tr_pan
         write(iounit,*) "  tr_iso     = ",tr_iso   
         write(iounit,*) "  tr_aero    = ",tr_aero
         write(iounit,*) "  tr_brine   = ",tr_brine  
@@ -390,7 +395,7 @@
            nlt_bgc_DMSPp_in, nlt_bgc_DMSPd_in, nlt_bgc_DMS_in, nlt_bgc_hum_in, &
            nlt_bgc_PON_in, nt_zbgc_frac_in, nt_bgc_S_in, nlt_chl_sw_in, &
            nlt_zaero_sw_in, &
-           bio_index_o_in, bio_index_in)
+           bio_index_o_in, bio_index_in, nt_pan_in) ! ND: adding pancake ice
 
         integer, intent(in), optional :: &
              nt_Tsfc_in, & ! ice/snow temperature
@@ -406,6 +411,7 @@
              nt_hpnd_in, & ! melt pond depth
              nt_ipnd_in, & ! melt pond refrozen lid thickness
              nt_fsd_in,  & ! floe size distribution
+             nt_pan_in,  & ! ND: adding pancake ice
              nt_isosno_in,  & ! starting index for isotopes in snow
              nt_isoice_in,  & ! starting index for isotopes in ice
              nt_aero_in,    & ! starting index for aerosols in ice
@@ -483,6 +489,7 @@
         if (present(nt_hpnd_in)) nt_hpnd = nt_hpnd_in
         if (present(nt_ipnd_in)) nt_ipnd = nt_ipnd_in
         if (present(nt_fsd_in) ) nt_fsd  = nt_fsd_in
+        if (present(nt_pan_in) ) nt_pan  = nt_pan_in
         if (present(nt_isosno_in)    ) nt_isosno     = nt_isosno_in
         if (present(nt_isoice_in)    ) nt_isoice     = nt_isoice_in
         if (present(nt_aero_in)      ) nt_aero       = nt_aero_in
@@ -732,7 +739,7 @@
            nt_Tsfc_out, nt_qice_out, nt_qsno_out, nt_sice_out, &
            nt_fbri_out, nt_iage_out, nt_FY_out, & 
            nt_alvl_out, nt_vlvl_out, nt_apnd_out, nt_hpnd_out, nt_ipnd_out, &
-           nt_fsd_out, nt_isosno_out, nt_isoice_out, &
+           nt_fsd_out, nt_isosno_out, nt_isoice_out, & 
            nt_aero_out, nt_zaero_out, nt_bgc_C_out, &
            nt_bgc_N_out, nt_bgc_chl_out, nt_bgc_DOC_out, nt_bgc_DON_out, &
            nt_bgc_DIC_out, nt_bgc_Fed_out, nt_bgc_Fep_out, nt_bgc_Nit_out, nt_bgc_Am_out, &
@@ -743,7 +750,7 @@
            nlt_bgc_DMSPp_out, nlt_bgc_DMSPd_out, nlt_bgc_DMS_out, nlt_bgc_hum_out, &
            nlt_bgc_PON_out, nt_zbgc_frac_out, nt_bgc_S_out, nlt_chl_sw_out, &
            nlt_zaero_sw_out, &
-           bio_index_o_out, bio_index_out)
+           bio_index_o_out, bio_index_out, nt_pan_out) !ND: adding pancake ice
 
         integer, intent(out), optional :: &
              nt_Tsfc_out, & ! ice/snow temperature
@@ -759,6 +766,7 @@
              nt_hpnd_out, & ! melt pond depth
              nt_ipnd_out, & ! melt pond refrozen lid thickness
              nt_fsd_out,  & ! floe size distribution
+             nt_pan_out, &  ! ND: adding pancake ice
              nt_isosno_out,  & ! starting index for isotopes in snow
              nt_isoice_out,  & ! starting index for isotopes in ice
              nt_aero_out,    & ! starting index for aerosols in ice
@@ -834,6 +842,7 @@
         if (present(nt_hpnd_out)) nt_hpnd_out = nt_hpnd
         if (present(nt_ipnd_out)) nt_ipnd_out = nt_ipnd
         if (present(nt_fsd_out) ) nt_fsd_out  = nt_fsd
+        if (present(nt_pan_out) ) nt_pan_out  = nt_pan ! ND: adding pancake ice
         if (present(nt_isosno_out)    ) nt_isosno_out     = nt_isosno
         if (present(nt_isoice_out)    ) nt_isoice_out     = nt_isoice
         if (present(nt_aero_out)      ) nt_aero_out       = nt_aero
@@ -909,6 +918,7 @@
         write(iounit,*) "  nt_hpnd = ",nt_hpnd
         write(iounit,*) "  nt_ipnd = ",nt_ipnd
         write(iounit,*) "  nt_fsd  = ",nt_fsd
+        write(iounit,*) "  nt_pan  = ",nt_pan
         write(iounit,*) "  nt_isosno     = ",nt_isosno
         write(iounit,*) "  nt_isoice     = ",nt_isoice
         write(iounit,*) "  nt_aero       = ",nt_aero

@@ -107,11 +107,11 @@
 
       integer (kind=int_kind) :: ntrcr
       logical (kind=log_kind) :: tr_iage, tr_FY, tr_lvl, tr_pond
-      logical (kind=log_kind) :: tr_iso, tr_aero, tr_fsd, tr_pan !ND: adding pancake tracer
+      logical (kind=log_kind) :: tr_iso, tr_aero, tr_fsd, tr_pan ! ND: adding pancake tracer
       logical (kind=log_kind) :: tr_pond_cesm, tr_pond_lvl, tr_pond_topo, wave_spec
       integer (kind=int_kind) :: nt_Tsfc, nt_sice, nt_qice, nt_qsno, nt_iage, nt_FY
       integer (kind=int_kind) :: nt_alvl, nt_vlvl, nt_apnd, nt_hpnd, nt_ipnd, &
-                                 nt_aero, nt_fsd, nt_isosno, nt_isoice
+                                 nt_aero, nt_fsd, nt_isosno, nt_isoice, nt_pan ! ND: adding pancake tracer
 
       real (kind=real_kind) :: rpcesm, rplvl, rptopo 
       real (kind=dbl_kind) :: Cf, puny
@@ -687,6 +687,10 @@
          end if
 
          nt_pan = max_ntrcr           ! ND: pancake ice tracer 
+         if (tr_pan) then
+             nt_pan = ntrcr + 1       ! pancake ice
+             ntrcr = ntrcr + npan 
+         end if
 
          nt_isosno = max_ntrcr
          nt_isoice = max_ntrcr
@@ -795,14 +799,14 @@
            tr_iso_in=tr_iso, &
            tr_pond_in=tr_pond, tr_pond_cesm_in=tr_pond_cesm, &
            tr_pond_lvl_in=tr_pond_lvl, &
-           tr_pond_topo_in=tr_pond_topo, tr_fsd_in=tr_fsd)
+           tr_pond_topo_in=tr_pond_topo, tr_fsd_in=tr_fsd, tr_pan_in=tr_pan) ! ND: adding pancake ice
       call icepack_init_tracer_indices(nt_Tsfc_in=nt_Tsfc, &
            nt_sice_in=nt_sice, nt_qice_in=nt_qice, &
            nt_qsno_in=nt_qsno, nt_iage_in=nt_iage, &
            nt_fy_in=nt_fy, nt_alvl_in=nt_alvl, nt_vlvl_in=nt_vlvl, &
            nt_apnd_in=nt_apnd, nt_hpnd_in=nt_hpnd, nt_ipnd_in=nt_ipnd, &
            nt_aero_in=nt_aero, nt_fsd_in=nt_fsd, &
-           nt_isosno_in=nt_isosno, nt_isoice_in=nt_isoice)
+           nt_isosno_in=nt_isosno, nt_isoice_in=nt_isoice, nt_pan_in=nt_pan) ! ND: adding pancake ice
 
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call icedrv_system_abort(string=subname, &
@@ -885,11 +889,11 @@
          heat_capacity   ! from icepack
 
       integer (kind=int_kind) :: ntrcr
-      logical (kind=log_kind) :: tr_iage, tr_FY, tr_lvl, tr_aero, tr_fsd, tr_iso
+      logical (kind=log_kind) :: tr_iage, tr_FY, tr_lvl, tr_aero, tr_fsd, tr_iso, tr_pan ! ND: adding pancake ice
       logical (kind=log_kind) :: tr_pond_cesm, tr_pond_lvl, tr_pond_topo
       integer (kind=int_kind) :: nt_Tsfc, nt_sice, nt_qice, nt_qsno, nt_iage, nt_fy
       integer (kind=int_kind) :: nt_alvl, nt_vlvl, nt_apnd, nt_hpnd, &
-                                 nt_ipnd, nt_aero, nt_fsd, nt_isosno, nt_isoice
+                                 nt_ipnd, nt_aero, nt_fsd, nt_isosno, nt_isoice, nt_pan ! ND: adding pancake ice
 
       character(len=*), parameter :: subname='(init_state)'
 
@@ -903,7 +907,7 @@
               tr_FY_out=tr_FY, tr_lvl_out=tr_lvl, tr_aero_out=tr_aero, &
               tr_iso_out=tr_iso, &
               tr_pond_cesm_out=tr_pond_cesm, tr_pond_lvl_out=tr_pond_lvl, &
-              tr_pond_topo_out=tr_pond_topo, tr_fsd_out=tr_fsd)
+              tr_pond_topo_out=tr_pond_topo, tr_fsd_out=tr_fsd, tr_pan_out=tr_pan) ! ND: adding pancake ice
          call icepack_query_tracer_indices(nt_Tsfc_out=nt_Tsfc, &
               nt_sice_out=nt_sice, nt_qice_out=nt_qice, &
               nt_qsno_out=nt_qsno, nt_iage_out=nt_iage, nt_fy_out=nt_fy, &
@@ -911,7 +915,7 @@
               nt_apnd_out=nt_apnd, nt_hpnd_out=nt_hpnd, &
               nt_ipnd_out=nt_ipnd, &
               nt_isosno_out=nt_isosno, nt_isoice_out=nt_isoice, &
-              nt_aero_out=nt_aero, nt_fsd_out=nt_fsd)
+              nt_aero_out=nt_aero, nt_fsd_out=nt_fsd, nt_pan_out=nt_pan) ! ND: adding pancake ice
          call icepack_warnings_flush(nu_diag)
          if (icepack_warnings_aborted()) call icedrv_system_abort(string=subname, &
              file=__FILE__,line= __LINE__)
@@ -967,6 +971,7 @@
       if (tr_FY)   trcr_depend(nt_FY)    = 0   ! area-weighted first-year ice area
       if (tr_lvl)  trcr_depend(nt_alvl)  = 0   ! level ice area
       if (tr_lvl)  trcr_depend(nt_vlvl)  = 1   ! level ice volume
+      if (tr_pan)  trcr_depend(nt_pan)  = 0   ! ND: area-weighted pancake ice   
       if (tr_pond_cesm) then
                    trcr_depend(nt_apnd)  = 0           ! melt pond area
                    trcr_depend(nt_hpnd)  = 2+nt_apnd   ! melt pond depth
@@ -1165,7 +1170,7 @@
          hsno_init = 0.25_dbl_kind   ! initial snow thickness (m)
 
       logical (kind=log_kind) :: tr_brine, tr_lvl, tr_fsd
-      integer (kind=int_kind) :: nt_Tsfc, nt_qice, nt_qsno, nt_sice, nt_fsd
+      integer (kind=int_kind) :: nt_Tsfc, nt_qice, nt_qsno, nt_sice, nt_fsd, nt_pan ! ND: adding pancake ice
       integer (kind=int_kind) :: nt_fbri, nt_alvl, nt_vlvl
 
       character(len=*), parameter :: subname='(set_state_var)'
@@ -1178,7 +1183,7 @@
         tr_fsd_out=tr_fsd)
       call icepack_query_tracer_indices( nt_Tsfc_out=nt_Tsfc, nt_qice_out=nt_qice, &
            nt_qsno_out=nt_qsno, nt_sice_out=nt_sice, nt_fsd_out=nt_fsd, &
-           nt_fbri_out=nt_fbri, nt_alvl_out=nt_alvl, nt_vlvl_out=nt_vlvl)
+           nt_fbri_out=nt_fbri, nt_alvl_out=nt_alvl, nt_vlvl_out=nt_vlvl, nt_pan_out = nt_pan) ! ND: adding pancake ice
       call icepack_query_parameters(rhos_out=rhos, Lfresh_out=Lfresh, puny_out=puny)
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call icedrv_system_abort(string=subname, &
@@ -1254,6 +1259,9 @@
                                   floe_rad_c=floe_rad_c,             &
                                   floe_binwidth=floe_binwidth,       &
                                   afsd=trcrn(i,nt_fsd:nt_fsd+nfsd-1,n))
+         ! ND: adding pancake ice
+         trcrn(i,nt_pan,n) = afsd(i,nt_fsd,n) ! Assume initially that all ice in the first category is pancakes
+
          ! surface temperature
          trcrn(i,nt_Tsfc,n) = Tsfc ! deg C
          ! ice enthalpy, salinity 

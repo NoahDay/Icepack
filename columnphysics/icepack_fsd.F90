@@ -45,9 +45,10 @@
       use icepack_kinds
       use icepack_parameters, only: c0, c1, c2, c4, p01, p1, p5, puny
       use icepack_parameters, only: pi, floeshape, wave_spec, bignum, gravit, rhoi
-      use icepack_tracers, only: nt_fsd, tr_fsd
+      use icepack_tracers, only: nt_fsd, tr_fsd, nt_pan, tr_pan !ND: adding nt_pan, tr_pan
       use icepack_warnings, only: warnstr, icepack_warnings_add
       use icepack_warnings, only: icepack_warnings_setabort, icepack_warnings_aborted
+!      use ice_state, only: trcr ! ND: adding this
 
       implicit none
 
@@ -744,6 +745,11 @@
          if (icepack_warnings_aborted(subname)) return
          trcrn(nt_fsd:nt_fsd+nfsd-1,n) = afsdn_latg(:,n)
 
+         !ND: pancake - lateral growth
+         !trcrn(nt_pan,1) = afsdn_latg(1,1)
+         !write(nu_diag,*) 'ND: afsdn_latg shape:', SHAPE(afsdn_latg)
+         !write(warnstr,*) 'ND: trcrn(nt_pan:', SHAPE(trcrn(nt_pan,:))
+         !call icepack_warnings_add(warnstr)
       end if ! lat growth
 
       new_size = nfsd
@@ -799,8 +805,11 @@
             endif ! entirely new ice or not
 
             trcrn(nt_fsd:nt_fsd+nfsd-1,n) = afsd_ni(:)
+
             call icepack_cleanup_fsdn (nfsd, trcrn(nt_fsd:nt_fsd+nfsd-1,n))
 
+            ! ND: adding new pancakes
+            !trcrn(nt_pan,n) = afsd_ni(1)
 
             if (icepack_warnings_aborted(subname)) return
          endif ! d_an_newi > puny
@@ -817,6 +826,16 @@
                 - area2(n)*afsdn_latg(k,n) ! after latg
       enddo    ! k
 
+      ! ND: evolving the pancake ice ---------------------------------
+      ! Take a proportion of the lateral growth
+      if (afsdn_latg(1,1) > puny .AND. afsdn(1,1) > puny) then
+         trcrn(nt_pan,1) = trcrn(nt_pan,1) +area2(1)*afsdn_latg(1,1)*(trcrn(nt_pan,1)/afsdn_latg(1,1)) - aicen_init(1)*afsdn(1,1)*(trcrn(nt_pan,1)/afsdn(1,1))
+         ! Take all of the new ice in the smallest category
+         trcrn(nt_pan,1) = trcrn(nt_pan,1) + aicen(1)*trcrn(nt_fsd,1) - area2(1)*afsdn_latg(1,1) 
+      else ! do nothing
+         trcrn(nt_pan,1) = trcrn(nt_pan,1)
+      endif
+      ! ------------------------------------------------------------------
       end subroutine fsd_add_new_ice
 
 !=======================================================================
@@ -1043,7 +1062,13 @@
             d_afsd_weld(k) = d_afsd_weld(k) + aicen(n)*d_afsdn_weld(k,n)
          end do ! n
       end do    ! k
-
+      ! ND: evolving pancake ice --------------------------------------------------
+      if (d_afsdn_weld(1,1) > puny) then
+         trcrn(nt_pan,1) = trcrn(nt_pan,1) + aicen(1)*d_afsdn_weld(1,1)*(trcrn(nt_pan,1)/d_afsdn_weld(1,1))
+         else ! do nothing
+         trcrn(nt_pan,1) = trcrn(nt_pan,1)
+      endif
+      ! ---------------------------------------------------------------------------
       end subroutine fsd_weld_thermo
 
 !=======================================================================
