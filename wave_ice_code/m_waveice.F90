@@ -287,12 +287,12 @@ end if
 
     do lp_i=1,nw
       alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0
-      do lp_j=1,nth
+      !do lp_j=1,nth
       !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
        ! exp(-alpha(lp_i)*cos(th(lp_j))*L)
        S_attn(lp_i) = S_init(lp_i)* &
         exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
-      end do
+      !end do
     end do
 
     do lp_i=1,nw*nth
@@ -325,12 +325,12 @@ end if
     ! Propagation of wave spectrum
     do lp_i=1,nw
       alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0 ! Noah Day changed from 0.75
-      do lp_j=1,nth
+      !do lp_j=1,nth
       !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
         !exp(-alpha(lp_i)*cos(th(lp_j))*L)
          S_attn(lp_i) = S_init(lp_i)* &
         exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
-      end do
+      !end do
     end do
 
     if (idl.ne.0.and.cmt.ne.0) then
@@ -1643,8 +1643,8 @@ end if
  real (kind=8)             :: om_m, tau
  real (kind=8)             :: f1, f2, f3
 
- om_m = 2d0*pi/Tm
- tau  = 2d0*pi/omega
+ om_m = 2d0*pi/Tm ! ND: rad/s
+ tau  = 2d0*pi/omega ! s
 
  f1 = (5d0/16d0)*(Hs**2)*(om_m**4)
  f2 = omega**(moment_no-5)
@@ -1653,6 +1653,111 @@ end if
  SDF_Bretschneider = f1*f2*f3
 
  end function SDF_Bretschneider
+
+
+ !=======================================================================
+
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+ !!! dir_spec_integral !!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: dir_spec_integral  - Integrate over the southern component of the directional spectrum
+!
+! !DESCRIPTION:
+!
+!  Given a 1D wave energy spectrum, distribute energy through the angular space
+!  in order to integrate over the southern wedge
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+  function dir_spec_integral(dum_S, mwd, idl)
+!
+! !USES:
+!
+! !INPUT PARAMETERS:
+!
+
+
+ real (kind=8), intent(in) :: mwd       ! mean wave direction
+ real (kind=8), dimension(nw), intent(in) :: dum_S
+ integer, intent(in)       :: idl
+!
+! !OUTPUT PARAMETERS
+!
+
+ real (kind=8) :: dir_spec_integral
+
+!
+!EOP
+!
+
+! ND: taking over
+ integer                   :: i ! do loop index
+ integer, parameter        :: thn = 31 ! number of theta bins
+ integer, parameter        :: lower = 3.0*pi/2.0 ! lower bound for south integral
+ integer, parameter        :: upper = pi/2.0 ! upper bound for south integral
+                                    ! min           max
+ real(kind=8), parameter   :: th_min=-pi, th_max=pi
+
+ real (kind=8), dimension(thn) :: &
+     theta_vec, dir_spec
+
+ ! Direction integral, range for theta, timestep for theta
+ real (kind=8)             :: dum_int_d, theta_range, delta_th
+
+
+
+
+ !1. ND: Define and integrate the directional spectrum
+ if (WIM_DIR.eq.1) then
+     ! Calculate the directional spectum
+     theta_range = th_max-th_min ! Theta \in [-pi, pi] centered around mwd
+     delta_th = theta_range/(thn-1)
+     do i=1,thn
+       ! Increment over the bins
+       theta_vec(i) = th_min + (i-1)*delta_th
+     enddo
+
+     ! Apply the parameteric directional spreading
+     do i=1,thn
+       if (((mwd-pi/2.0) .lt. theta_vec(i)).and.(theta_vec(i) .lt. (mwd+pi/2.0))) then
+         ! -pi/2 < theta - theta_0 < pi/2
+         dir_spec(i) = (2.0/pi)*(COS(theta_vec(i)-mwd))**2;
+       else
+         dir_spec(i) = 0.0
+       endif ! < theta_vec(i) <
+     enddo
+     dum_int_d = 0.0 ! Initialise integral
+    ! dum_int_d  = SUM(dir_spec)*(2.0*pi/thn) ! Full integration, D(theta)d theta
+
+    ! Integrate over the southern wedge, [3pi/4, pi/2]
+    do i=1,thn
+       if ((theta_vec(i) .gt. lower).or.(theta_vec(i) .lt. upper)) then
+         ! Wave is travelling south so integrate the energy
+         dum_int_d = dum_int_d + delta_th * dir_spec(i) ! D(theta)d theta
+       endif ! lower (=3pi/2) >  theta_vec(i) .or   theta_vec(i) < upper (=pi/2)
+    enddo
+ else
+   ! If directional spreading is turned off give each cell all the energy
+   dum_int_d = 1.0
+ endif ! WIM_DIR
+
+
+! if (idl.ne.0) then
+!   write(idl,*) '>>>--------------------------------------------->>>'
+!   write(idl,*) '        Bretschneider  -->  dum_int_d  = ',dum_int_d
+!   write(idl,*) '                  SUM  -->  int_d  = ',sum(dir_spec)*delta_th
+!   write(idl,*) '                  MWD  -->  is  = [rad] ',mwd
+ !end if
+
+ dir_spec_integral = dum_int_d ! Output
+
+end function dir_spec_integral
 
 !=======================================================================
 

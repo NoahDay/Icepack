@@ -82,10 +82,10 @@
  !real(kind=8) :: dum_T        ! period
 
  !dum_T = 2*pi*(dum_om**-1)
-
- fn_Attn_MBK = beta0*(dum_om**2) + beta1*(dum_om**4)
  !fn_Attn_MBK = beta0*(dum_T**-2) + beta1*(dum_T**-4) !ND: experimenting with T
  !fn_Attn_MBK = beta0*((dum_om/pi)**2) + beta1*((dum_om/pi)**4) !ND: experimenting with T
+
+ fn_Attn_MBK = beta0*(dum_om**2) + beta1*(dum_om**4)
 
  fn_Attn_MBK = attn_fac*fn_Attn_MBK
 
