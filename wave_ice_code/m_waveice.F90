@@ -290,8 +290,12 @@ end if
       !do lp_j=1,nth
       !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
        ! exp(-alpha(lp_i)*cos(th(lp_j))*L)
-       S_attn(lp_i) = S_init(lp_i)* &
-        exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      if (ATTN_OFF.eq.1) then 
+         S_attn(lp_i) = S_init(lp_i)
+      else 
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      endif ! ATTN_OFF
       !end do
     end do
 
@@ -328,8 +332,12 @@ end if
       !do lp_j=1,nth
       !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
         !exp(-alpha(lp_i)*cos(th(lp_j))*L)
-         S_attn(lp_i) = S_init(lp_i)* &
-        exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      if (ATTN_OFF.eq.1) then 
+         S_attn(lp_i) = S_init(lp_i)
+      else 
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      endif ! ATTN_OFF
       !end do
     end do
 

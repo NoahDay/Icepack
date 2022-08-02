@@ -97,8 +97,9 @@
  character(20)             :: fname_ww3='ww3_om2_1deg_'!'waves/ww3.1978'
  integer, parameter       :: OVERWRITE_DIRS = 0   ! overwrite wave directions with usr set ones (0=no,1=yes), set MWD to pi
  integer, parameter       :: WIM_BREAKUP = 0   ! use the WIM breakup method (0=no,1=yes)
- integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=no,1=yes)
- integer, parameter       :: WIM_DIR = 0   ! use the WIM directional spectum method (0=no,1=yes)
+ integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=blockwise,1=longitudinal,other=no propagation)
+ integer, parameter       :: WIM_DIR = 1   ! use the WIM directional spectum method (0=no,1=yes)
+ integer, parameter       :: ATTN_OFF = 0  ! Do not compute attenuation (0=no,1=yes), only in sub_uncoupled for now
 
 !=======================================================================
 
