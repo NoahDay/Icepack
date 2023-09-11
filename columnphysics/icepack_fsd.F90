@@ -708,8 +708,16 @@
          DO WHILE (elapsed_t.lt.dt)
         
              nsubt = nsubt + 1
+<<<<<<< Updated upstream
              if (nsubt.gt.100) print *, 'latg not converging'
  
+=======
+             if (nsubt.gt.100) then
+                 write(warnstr,*) subname,'latg not converging'
+                 call icepack_warnings_add(warnstr)
+             endif
+
+>>>>>>> Stashed changes
              ! finite differences
              df_flx(:) = c0 ! NB could stay zero if all in largest FS cat
              f_flx (:) = c0
@@ -720,7 +728,6 @@
                 df_flx(k) = f_flx(k+1) - f_flx(k)
              end do
 
-!         if (abs(sum(df_flx)) > puny) print*,'fsd_add_new ERROR df_flx /= 0'
 
              dafsd_tmp(:) = c0
              do k = 1, nfsd
@@ -941,7 +948,6 @@
          gain, loss     ! welding tendencies
 
       real(kind=dbl_kind) :: &
-         prefac     , & ! multiplies kernel
          kern       , & ! kernel
          subdt      , & ! subcycling time step for stability (s)
          elapsed_t      ! elapsed subcycling time
@@ -952,7 +958,6 @@
       afsdn  (:,:) = c0
       afsd_init(:) = c0
       stability    = c0
-      prefac       = p5
 
       do n = 1, ncat
 
@@ -996,8 +1001,7 @@
                    if (k > i) then
                        kern = c_weld * floe_area_c(i) * aicen(n)
                        loss(i) = loss(i) + kern*afsd_tmp(i)*afsd_tmp(j)
-                       if (i.eq.j) prefac = c1 ! otherwise 0.5
-                       gain(k) = gain(k) + prefac*kern*afsd_tmp(i)*afsd_tmp(j)
+                       gain(k) = gain(k) + kern*afsd_tmp(i)*afsd_tmp(j)
                    end if
                end do
                end do
@@ -1020,12 +1024,11 @@
                if (afsd_tmp(nfsd) > (c1-puny)) exit
 
             END DO ! time
-
+            afsdn(:,n) = afsd_tmp(:)
             call icepack_cleanup_fsdn (nfsd, afsdn(:,n))
             if (icepack_warnings_aborted(subname)) return
 
             do k = 1, nfsd
-               afsdn(k,n) = afsd_tmp(k)
                trcrn(nt_fsd+k-1,n) = afsdn(k,n)
                ! history/diagnostics
                d_afsdn_weld(k,n) = afsdn(k,n) - afsd_init(k)

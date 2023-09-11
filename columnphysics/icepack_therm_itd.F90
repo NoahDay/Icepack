@@ -868,7 +868,7 @@
                                fhocn,      faero_ocn,  &
                                fiso_ocn,               &
                                rside,      meltl,      &
-                               fside,      sss,        &
+                               fside,      wlat,        &
                                aicen,      vicen,      &
                                vsnon,      trcrn,      &
                                fzsal,      flux_bio,   &
@@ -898,6 +898,9 @@
 
       real (kind=dbl_kind), intent(in) :: &
          rside   , & ! fraction of ice that melts laterally
+         wlat        ! lateral melt rate (m/s)
+
+      real (kind=dbl_kind), intent(inout) :: &
          fside       ! lateral heat flux (W/m^2)
 
       real (kind=dbl_kind), intent(inout) :: &
@@ -939,7 +942,7 @@
          dfsalt  , & ! change in fsalt
          dvssl   , & ! snow surface layer volume
          dvint   , & ! snow interior layer
-         cat1_arealoss, tmp !
+         bin1_arealoss, tmp !
 
       logical (kind=log_kind) :: &
          flag        ! .true. if there could be lateral melting
@@ -949,7 +952,6 @@
          vicen_init, & ! volume per unit area of ice (m)
          G_radialn , & ! rate of lateral melt (m/s)
          delta_an  , & ! change in the ITD
-         qin       , & ! enthalpy
          rsiden        ! delta_an/aicen
 
       real (kind=dbl_kind), dimension (nfsd,ncat) :: &
@@ -963,11 +965,9 @@
       real (kind=dbl_kind), dimension(nfsd+1) :: &
          f_flx         !
 
-!echmod - for average qin
-      real (kind=dbl_kind), intent(in) :: &
-         sss
       real (kind=dbl_kind) :: &
-         Ti, Si0, qi0, &
+         sicen,        & 
+         etot,         & ! column energy per itd cat, for FSD code
          elapsed_t,    & ! FSD subcycling
          subdt           ! FSD timestep (s)
 
@@ -980,12 +980,11 @@
       dfsalt   = c0
       dvssl    = c0
       dvint    = c0
-      cat1_arealoss  = c0
+      bin1_arealoss  = c0
       tmp  = c0
       vicen_init = c0
       G_radialn  = c0
       delta_an   = c0
-      qin        = c0
       rsiden     = c0
       afsdn      = c1
       afsdn_init = c0
@@ -1002,59 +1001,70 @@
          d_afsd_latm(:) = c0
       end if
 
-      if (tr_fsd .and. fside < c0) then
+      if (tr_fsd .and. wlat > puny) then
          flag = .true.
 
 
-! echmod - using category values would be preferable to the average value
-         ! Compute average enthalpy of ice (taken from add_new_ice)
-         if (sss > c2 * dSin0_frazil) then
-            Si0 = sss - dSin0_frazil
-         else
-            Si0 = sss**2 / (c4*dSin0_frazil)
-         endif
-         Ti = min(liquidus_temperature_mush(Si0/phi_init), -p1)
-         qi0 = enthalpy_mush(Ti, Si0)
-
+         ! for FSD rside and fside not yet computed correctly, redo here
+         fside = c0
          do n = 1, ncat
-            if (ktherm == 2) then  ! mushy
-               do k = 1, nilyr
-                  !qin(n) = qin(n) &
-                  !       + trcrn(nt_qice+k-1,n)*vicen(n)/real(nilyr,kind=dbl_kind)
-                  qin(n) = qi0
-               enddo
-            else
-               qin(n) = -rhoi*Lfresh
+            G_radialn(n) = -wlat ! negative
+            if (any(afsdn(:,n) < c0)) then
+                write(warnstr,*) subname, 'lateral_melt B afsd < 0 ',n
+                call icepack_warnings_add(warnstr)
             endif
 
-            if (qin(n) < -puny) G_radialn(n) = -fside/qin(n) ! negative
+            bin1_arealoss = -trcrn(nt_fsd+1-1,n) * aicen(n) * dt &
+                              * G_radialn(n) / floe_binwidth(1)
 
-            if (G_radialn(n) < -puny) then
+            delta_an(n) = c0
+            do k = 1, nfsd
+                delta_an(n) = delta_an(n) + ((c2/floe_rad_c(k))*aicen(n) &
+                     * trcrn(nt_fsd+k-1,n)*G_radialn(n)*dt) ! delta_an < 0
+            end do
 
+<<<<<<< Updated upstream
                
                if (any(afsdn(:,n) < c0)) print*,&
                  'lateral_melt B afsd < 0',n
+=======
+            ! add negative area loss from fsd
+            delta_an(n) = delta_an(n) - bin1_arealoss
 
-               cat1_arealoss = -trcrn(nt_fsd+1-1,n) * aicen(n) * dt &
-                             * G_radialn(n) / floe_binwidth(1)
+            if (delta_an(n) > c0) then
+               write(warnstr,*) subname, 'ERROR delta_an > 0 ',delta_an(n)
+               call icepack_warnings_add(warnstr)
+            endif
+>>>>>>> Stashed changes
 
-               delta_an(n) = c0
-               do k = 1, nfsd
-                  delta_an(n) = delta_an(n) + ((c2/floe_rad_c(k))*aicen(n) &
-                                            * trcrn(nt_fsd+k-1,n)*G_radialn(n)*dt) ! delta_an < 0
-               end do
+            ! following original code, not necessary for fsd
+             if (aicen(n) > c0) rsiden(n) = MIN(-delta_an(n)/aicen(n),c1)
 
-               ! add negative area loss from fsd
-               delta_an(n) = delta_an(n) - cat1_arealoss
+             if (rsiden(n) < c0) then
+                write(warnstr,*) subname, 'ERROR rsiden < 0 ',rsiden(n)
+                call icepack_warnings_add(warnstr)
+             endif
 
+            ! melting energy/unit area in each column, etot < 0
+             etot = c0
+             do k = 1, nslyr
+                etot = etot + trcrn(nt_qsno+k-1,n) * vsnon(n)/real(nslyr,kind=dbl_kind)
+             enddo
+
+<<<<<<< Updated upstream
                if (delta_an(n) > c0) print*,'ERROR delta_an > 0', delta_an(n)
  
                ! following original code, not necessary for fsd
                if (aicen(n) > c0) rsiden(n) = MIN(-delta_an(n)/aicen(n),c1)
+=======
+             do k = 1, nilyr
+                etot = etot + trcrn(nt_qice+k-1,n) * vicen(n)/real(nilyr,kind=dbl_kind)
+             enddo                  ! nilyr
 
-               if (rsiden(n) < c0) print*,'ERROR rsiden < 0', rsiden(n)
+             ! lateral heat flux, fside < 0        
+             fside = fside + rsiden(n)*etot/dt
+>>>>>>> Stashed changes
 
-            end if ! G_radialn
          enddo ! ncat
 
       else if (rside > c0) then ! original, non-fsd implementation
@@ -1108,9 +1118,17 @@
                      DO WHILE (elapsed_t.lt.dt)
 
                          nsubt = nsubt + 1
+<<<<<<< Updated upstream
                          if (nsubt.gt.100) &
                            print *, 'latm not converging'
                      
+=======
+                         if (nsubt.gt.100) then
+                              write(warnstr,*) subname, 'latm not converging'
+                              call icepack_warnings_add(warnstr)
+                         endif
+
+>>>>>>> Stashed changes
                          ! finite differences
                          df_flx(:) = c0
                          f_flx (:) = c0
@@ -1122,8 +1140,10 @@
                           df_flx(k)   = f_flx(k+1) - f_flx(k) 
                          end do
 
-                         if (abs(sum(df_flx(:))) > puny) &
-                           print*,'sum(df_flx)/=0'
+                         if (abs(sum(df_flx(:))) > puny) then
+                              write(warnstr,*) subname, 'sum(df_flx) /= 0'
+                              call icepack_warnings_add(warnstr)
+                         endif
 
                          ! this term ensures area conservation
                          tmp = SUM(afsd_tmp(:)/floe_rad_c(:))
@@ -1218,7 +1238,7 @@
       endif          ! flag
 
       if (tr_fsd) then
-
+         trcrn(nt_fsd:nt_fsd+nfsd-1,:) =  afsdn
          call icepack_cleanup_fsd (ncat, nfsd, trcrn(nt_fsd:nt_fsd+nfsd-1,:) )
          if (icepack_warnings_aborted(subname)) return
 
@@ -1946,7 +1966,7 @@
                                      Tf,           sss,           &
                                      salinz,                      &
                                      rside,        meltl,         &
-                                     fside,                       &
+                                     fside,        wlat,          &
                                      frzmlt,       frazil,        &
                                      frain,        fpond,         &
                                      fresh,        fsalt,         &
@@ -1986,9 +2006,11 @@
          Tf       , & ! freezing temperature (C)
          sss      , & ! sea surface salinity (ppt)
          rside    , & ! fraction of ice that melts laterally
-         fside    , & ! lateral heat flux (W/m^2)
          frzmlt   , & ! freezing/melting potential (W/m^2)
          wave_sig_ht ! significant height of waves in ice (m)
+      
+      real (kind=dbl_kind), intent(in), optional :: &
+          wlat         ! lateral melt rate (m/s)
 
       real (kind=dbl_kind), dimension(:), intent(in)  :: &
          wave_spectrum  ! ocean surface wave spectrum E(f) (m^2 s)
@@ -2028,6 +2050,7 @@
       real (kind=dbl_kind), intent(inout) :: &
          aice     , & ! sea ice concentration
          aice0    , & ! concentration of open water
+         fside    , & ! lateral heat flux (W/m^2)
          frain    , & ! rainfall rate (kg/m^2 s)
          fpond    , & ! fresh water flux to ponds (kg/m^2/s)
          fresh    , & ! fresh water flux to ocean (kg/m^2/s)
@@ -2106,6 +2129,14 @@
       if (present(HDO_ocn)   ) l_HDO_ocn    = HDO_ocn
       if (present(H2_16O_ocn)) l_H2_16O_ocn = H2_16O_ocn
       if (present(H2_18O_ocn)) l_H2_18O_ocn = H2_18O_ocn
+
+      if (tr_fsd) then
+              if (.not.(present(wlat))) then
+                 call icepack_warnings_add(subname//' error in FSD arguments, tr_fsd=T')
+                 call icepack_warnings_setabort(.true.,__FILE__,__LINE__)
+                 return
+              endif
+      endif
 
       !-----------------------------------------------------------------
       ! Let rain drain through to the ocean.
@@ -2204,7 +2235,7 @@
                          fhocn,     faero_ocn,     &
                          l_fiso_ocn,               &
                          rside,     meltl,         &
-                         fside,     sss,           &
+                         fside,     wlat,           &
                          aicen,     vicen,         &
                          vsnon,     trcrn,         &
                          fzsal,     flux_bio,      &

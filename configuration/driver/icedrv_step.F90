@@ -110,7 +110,7 @@
       use icedrv_arrays_column, only: fswthrun, fswthrun_vdr, fswthrun_vdf, fswthrun_idr, fswthrun_idf
       use icedrv_calendar, only: yday
       use icedrv_domain_size, only: ncat, nilyr, nslyr, n_aero, n_iso, nx
-      use icedrv_flux, only: frzmlt, sst, Tf, strocnxT, strocnyT, rside, fside, &
+      use icedrv_flux, only: frzmlt, sst, Tf, strocnxT, strocnyT, rside, fside, wlat, &
                              fbot, Tbot, Tsnice
       use icedrv_flux, only: meltsn, melttn, meltbn, congeln, snoicen, uatm, vatm
       use icedrv_flux, only: wind, rhoa, potT, Qa, Qa_iso, zlvl, strax, stray, flatn
@@ -305,6 +305,7 @@
             fbot     = fbot(i),       frzmlt    = frzmlt(i),      &
             Tbot     = Tbot(i),       Tsnice    = Tsnice(i),      &
             rside    = rside(i),      fside     = fside(i),       &
+            wlat     = wlat(i),                                   &
             fsnow    = fsnow(i),      frain     = frain(i),       &
             fpond    = fpond(i),                                  &
             fsurf    = fsurf(i),      fsurfn    = fsurfn(i,:),    &
@@ -403,7 +404,7 @@
       use icedrv_domain_size, only: ncat, nilyr, nslyr, n_aero, nblyr, &
                                     nltrcr, nx, nfsd
       use icedrv_flux, only: fresh, frain, fpond, frzmlt, frazil, frz_onset
-      use icedrv_flux, only: update_ocn_f, fsalt, Tf, sss, salinz, fhocn, rside, fside
+      use icedrv_flux, only: update_ocn_f, fsalt, Tf, sss, salinz, fhocn, rside, fside, wlat
       use icedrv_flux, only: meltl, frazil_diag, flux_bio, faero_ocn, fiso_ocn 
       use icedrv_flux, only: HDO_ocn, H2_16O_ocn, H2_18O_ocn
       use icedrv_init, only: tmask
@@ -466,6 +467,7 @@
                          nt_strata=nt_strata(1:ntrcr,:),              &
                          Tf=Tf(i), sss=sss(i),                        &
                          salinz=salinz(i,:), fside=fside(i),          &
+                         wlat=wlat(i),                                &
                          rside=rside(i),   meltl=meltl(i),            &
                          frzmlt=frzmlt(i), frazil=frazil(i),          &
                          frain=frain(i),   fpond=fpond(i),            &
