@@ -880,6 +880,7 @@
       integer (kind=int_kind) :: k
 
       w_amp = c2* SQRT(SUM(local_wave_spec*dwavefreq))   ! sig wave amplitude
+
       f_peak = wavefreq(MAXLOC(local_wave_spec, DIM=1))  ! peak frequency
 
       ! tensile failure

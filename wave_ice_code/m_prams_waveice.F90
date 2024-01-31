@@ -33,9 +33,9 @@
  real(kind=8), parameter  :: reldens = 0.9d0                ! ice density/fluid density
 
  ! NUMERICAL PARAMS
- integer, parameter       :: WIM=0 		                ! waves in ice, (0 = off, 1 = on)
+ integer, parameter       :: WIM=1 		                ! waves in ice, (0 = off, 1 = on)
 
- integer, parameter       :: cmt=0 		                ! `write' parameter
+ integer, parameter       :: cmt=1 		                ! `write' parameter, (0 = off, 1 = on)
 
  integer, parameter       :: do_coupled=0                   ! attn/floe size coupled?
 
@@ -50,7 +50,7 @@
 
  real(kind=8), parameter  :: tolice = 1.0d-2               ! conc<tolice treated as zero ice
  real(kind=8), parameter  :: tolh   = 1.0d-1               ! h<tolh      treated as zero ice
- real(kind=8), parameter  :: toli   = 1.0d-16
+ real(kind=8), parameter  :: toli   = 1.0d-16			   ! threshold for the propagation of waves
 
  ! ATTENUATION
 
@@ -85,18 +85,24 @@
  integer, parameter                    :: WAVE_METH = 1   ! inc waves (0=user,1=ww3)
  real(kind=8), allocatable             :: ww3_lat(:,:), ww3_lon(:,:), ww3_tm(:,:)
  real(kind=8), allocatable             :: ww3_swh(:,:), ww3_fp(:,:), ww3_dir(:,:), &
- 				ww3_swh_full(:,:,:), ww3_fp_full(:,:,:), ww3_dir_full(:,:,:)
+ 				ww3_swh_full(:,:,:), ww3_fp_full(:,:,:), ww3_dir_full(:,:,:), &
+        ww3_swh_blk(:,:,:), ww3_fp_blk(:,:,:), ww3_dir_blk(:,:,:)
  integer, parameter                    :: nww3_dt = 1 ! ww3 time step relative to cice
 
  ! DATA
 
- character(100)           :: waveicedatadir='/Users/noahday/GitHub/cice-dirs/input/CICE_data/forcing/gx1/CAWCR/MONTHLY'!19 '../../waveice_data/'
+ character(100)           :: waveicedatadir='/Users/noahday/GitHub/cice-dirs/input/CICE_data/forcing/access-om2_1deg/CAWCR'!19 '../../waveice_data/'
  character(10)            :: fname_alp='alp_coeffs'
  !character(24)            :: fname_ww3='waves/ww3.197803_full.nc'
- character(3)             :: fname_ww3='ww3_'!'waves/ww3.1978'
- integer, parameter       :: OVERWRITE_DIRS = 0   ! overwrite wave directions with usr set ones (0=no,1=yes), set MWD to pi
+ character(20)             :: fname_ww3='ww3_om2_10deg_'!'waves/ww3.1978'
+ integer, parameter       :: OVERWRITE_DIRS = 1   ! overwrite wave directions with usr set ones (0=no,1=yes), set MWD to pi
  integer, parameter       :: WIM_BREAKUP = 0   ! use the WIM breakup method (0=no,1=yes)
- integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=no,1=yes)
+ integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=blockwise,1=longitudinal,other=no propagation)
+ integer, parameter       :: WIM_DIR = 0   ! use the WIM directional spectum method (0=no,1=yes)
+ integer, parameter       :: ATTN_OFF = 0  ! Do not compute attenuation (0=no,1=yes), only in sub_uncoupled for now
+ ! Amplitude drop tests
+ integer, parameter       :: AMPLITUDE_DROP = 0  ! Turn on amplitude drop (0=no,1=yes)
+ integer, parameter       :: ADJUSTED_ATTN = 0  ! Turn on adjusted MBK (2014) attenuation (0=no,1=yes)
 
 !=======================================================================
 

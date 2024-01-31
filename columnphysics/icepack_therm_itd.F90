@@ -1582,6 +1582,10 @@
       !-----------------------------------------------------------------
       ! Compute the volume, area, and thickness of new ice.
       !-----------------------------------------------------------------
+      !write(warnstr,*) subname, &
+      !                   'ITD Thermodynamics: hicen_init(n+1) > hicen_init(n)'
+      !                 call icepack_warnings_add(warnstr)
+      !write(nu_diag,*) 'frzmlt: ',frzmlt ! ND debugging
 
       fnew = max (frzmlt, c0)    ! fnew > 0 iff frzmlt > 0
       vi0new = -fnew*dt / qi0new ! note sign convention, qi < 0

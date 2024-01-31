@@ -85,7 +85,7 @@
 
  integer, intent(in)                             :: idl
  real(kind=8), intent(in)                 :: Lcell
- real(kind=8), intent(in)                 :: dum_hice,dum_conc     ! cell length, ice thick & con
+ real(kind=8), intent(in)                 :: dum_hice,dum_conc     ! cell length (m), ice thick & con
 
  integer, intent(in)                                 :: dum_nw, dum_nth
  real(kind=8), dimension(dum_nw), intent(in)  :: dum_om, dum_k_wtr, dum_S_init
@@ -281,144 +281,155 @@ end if
 
  if (Es.lt.epsc*sqrt(-2/log(Pc))) then
 
- L = Lcell ! initialise propagation length
+    L = Lcell ! initialise propagation length
 
- !Noah Day 25/10 floe_sz_max = floe_sz_init
+    !Noah Day 25/10 floe_sz_max = floe_sz_init
 
- do lp_i=1,nw
-  alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0
-  do lp_j=1,nth
-   S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
-     exp(-alpha(lp_i)*cos(th(lp_j))*L)
-  end do
- end do
+    do lp_i=1,nw
+      alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0
+      !do lp_j=1,nth
+      !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
+       ! exp(-alpha(lp_i)*cos(th(lp_j))*L)
+      if (ATTN_OFF.eq.1) then 
+         S_attn(lp_i) = S_init(lp_i)
+      else 
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      endif ! ATTN_OFF
+      !end do
+    end do
 
- do lp_i=1,nw*nth
-  S_attn_out(lp_i) = S_attn(lp_i)
- end do
+    do lp_i=1,nw*nth
+      S_attn_out(lp_i) = S_attn(lp_i)
+    end do
 
- if (idl.ne.0.and.cmt.ne.0) then
-  write(idl,*) '>>>>>>> RESULT:'
-  write(idl,*) '                      --> S_init isnt strong enough to break ice: ', &
-   Es, epsc*sqrt(-2/log(Pc))
-  write(idl,*) '                          tmt =', tmt
-  !write(idl,*) '                  floe_sz_max =', floe_sz_max
-!   write(idl,*) '<<<---------------------------------------------<<<'
- end if
+    if (idl.ne.0.and.cmt.ne.0) then
+      write(idl,*) '>>>>>>> RESULT:'
+      write(idl,*) '                      --> S_init isnt strong enough to break ice: ', &
+      Es, epsc*sqrt(-2/log(Pc))
+      write(idl,*) '                          tmt =', tmt
+      !write(idl,*) '                  floe_sz_max =', floe_sz_max
+    !   write(idl,*) '<<<---------------------------------------------<<<'
+    end if
 
  !tmt = 0      ! Es proportional to hice -> so can't just switch off (LB Apr 14)
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  else !!! potential for fracture
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    L = Lcell ! initialise propagation length
 
-!Noah Day 25/10  L = Lcell ! initialise propagation length
+    !Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+    !Noah Day 25/10   write(idl,*) '>>>>>>> AT END OF CELL:'
+      !write(idl,*) 'D1 (init) = ', floe_sz_init, ': empirical breaking size = ', floe_sz_brk_emp
+    !Noah Day 25/10 end if
 
-!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
-!Noah Day 25/10   write(idl,*) '>>>>>>> AT END OF CELL:'
-  !write(idl,*) 'D1 (init) = ', floe_sz_init, ': empirical breaking size = ', floe_sz_brk_emp
- !Noah Day 25/10 end if
+    ! Propagation of wave spectrum
+    do lp_i=1,nw
+      alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0 ! Noah Day changed from 0.75
+      !do lp_j=1,nth
+      !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
+        !exp(-alpha(lp_i)*cos(th(lp_j))*L)
+      if (ATTN_OFF.eq.1) then 
+         S_attn(lp_i) = S_init(lp_i)
+      else 
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
+      endif ! ATTN_OFF
+      !end do
+    end do
 
-! Propagation of wave spectrum
- do lp_i=1,nw
-  alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0 ! Noah Day changed from 0.75
-  do lp_j=1,nth
-   S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
-     exp(-alpha(lp_i)*cos(th(lp_j))*L)
-  end do
- end do
+    if (idl.ne.0.and.cmt.ne.0) then
+      write(idl,*) 'alpha = ', alpha(1), '->', alpha(nw)
+      write(idl,*) 'S_attn = ', S_attn(1), '->', S_attn(nw)
+    end if
 
- if (idl.ne.0.and.cmt.ne.0) then
-  write(idl,*) 'alpha = ', alpha(1), '->', alpha(nw)
-  write(idl,*) 'S_attn = ', S_attn(1), '->', S_attn(nw)
- end if
+    if (WIM_BREAKUP.eq.1) then
+      call sub_StrainSpec(S_init, Es)
+    else
+      Es = 0d0
+    end if
 
- if (WIM_BREAKUP.eq.1) then
-  call sub_StrainSpec(S_init, Es)
- else
-   Es = 0d0
- end if
+    if (idl.ne.0.and.cmt.ne.0) then
+      write(idl,*) 'Es = ', Es
+    end if
 
- if (idl.ne.0.and.cmt.ne.0) then
-  write(idl,*) 'Es = ', Es
- end if
+    ! Set attenuated spectrum (as not floe size dependent)
+    do lp_i=1,nw*nth
+      S_attn_out(lp_i) = S_attn(lp_i)
+    end do
 
- ! Set attenuated spectrum (as not floe size dependent)
- do lp_i=1,nw*nth
-  S_attn_out(lp_i) = S_attn(lp_i)
- end do
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Noah Day 25/10 if (floe_sz_brk_emp.gt.floe_sz_init) then  !!! floes already
+    !!!                             smaller than breakage size
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Noah Day 25/10 floe_sz_max = floe_sz_init
+      !tmt = 0
+    !Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+    !Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
+    !Noah Day 25/10   write(idl,*) '                       --> Breakage occurs: location inconsequential'
+    !Noah Day 25/10   write(idl,*) '                           initial floe size', floe_sz_init, '<', &
+    !Noah Day 25/10      											floe_sz_brk_emp
+    !Noah Day 25/10   write(idl,*) '                           tmt =', tmt
+    !Noah Day 25/10   write(idl,*) '                   floe_sz_max =', floe_sz_max
+    !   write(idl,*) '<<<---------------------------------------------<<<'
+    !Noah Day 25/10  end if
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Noah Day 25/10 elseif (Es.ge.epsc*sqrt(-2/log(Pc))) then   !!! waves strong
+    !!!                   enough to break ice at end of cell
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Noah Day 25/10   floe_sz_max = floe_sz_brk_emp
+      !tmt = 0
+    !Noah Day 25/10   if (idl.ne.0.and.cmt.ne.0) then
+    !Noah Day 25/10    write(idl,*) '>>>>>>> RESULT:'
+    !Noah Day 25/10    write(idl,*) '                       --> Breakage occurs at end of cell',L/1000d0,'km'
+    !Noah Day 25/10    write(idl,*) '                           tmt =', tmt
+    !Noah Day 25/10    write(idl,*) '                   floe_sz_max =', floe_sz_max
+    !   write(idl,*) '<<<---------------------------------------------<<<'
+    !Noah Day 25/10   end if
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Noah Day 25/10 else        !!! search for point at which waves can break ice
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !Noah Day 25/10 Lc = zero(i0,Lcell,toli,toli,fn_proplng_uncoupled)
+      !Noah Day 25/10 L           = Lc
+      !Noah Day 25/10 floe_sz_max = (Lc*floe_sz_brk_emp + (Lcell-Lc)*floe_sz_init)/Lcell
+      !Noah Day 25/10 tmt         = 1   ! waves attenuated (in all liklihood)
+    !Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
+    !Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
+    !Noah Day 25/10   write(idl,*) '                      --> Breakage occurs within cell ', &
+    !Noah Day 25/10   Lc/1000d0,'km' !, '(zero chk: ', fn_proplng_uncoupled(Lc),')'
+    !Noah Day 25/10   write(idl,*) '                          tmt =', tmt
+    !Noah Day 25/10   write(idl,*) '                  floe_sz_max =', floe_sz_max
+    !   write(idl,*) '<<<---------------------------------------------<<<'
+    !Noah Day 25/10  end if
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Noah Day 25/10end if ! (Es.ge.epsc*sqrt(-2/log(Pc)))
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!Noah Day 25/10 if (floe_sz_brk_emp.gt.floe_sz_init) then  !!! floes already
- !!!                             smaller than breakage size
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !Noah Day 25/10 floe_sz_max = floe_sz_init
-  !tmt = 0
-!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
-!Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
-!Noah Day 25/10   write(idl,*) '                       --> Breakage occurs: location inconsequential'
-!Noah Day 25/10   write(idl,*) '                           initial floe size', floe_sz_init, '<', &
-!Noah Day 25/10      											floe_sz_brk_emp
-!Noah Day 25/10   write(idl,*) '                           tmt =', tmt
-!Noah Day 25/10   write(idl,*) '                   floe_sz_max =', floe_sz_max
-!   write(idl,*) '<<<---------------------------------------------<<<'
-!Noah Day 25/10  end if
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!Noah Day 25/10 elseif (Es.ge.epsc*sqrt(-2/log(Pc))) then   !!! waves strong
- !!!                   enough to break ice at end of cell
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!Noah Day 25/10   floe_sz_max = floe_sz_brk_emp
-  !tmt = 0
-!Noah Day 25/10   if (idl.ne.0.and.cmt.ne.0) then
-!Noah Day 25/10    write(idl,*) '>>>>>>> RESULT:'
-!Noah Day 25/10    write(idl,*) '                       --> Breakage occurs at end of cell',L/1000d0,'km'
-!Noah Day 25/10    write(idl,*) '                           tmt =', tmt
-!Noah Day 25/10    write(idl,*) '                   floe_sz_max =', floe_sz_max
-!   write(idl,*) '<<<---------------------------------------------<<<'
-!Noah Day 25/10   end if
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!Noah Day 25/10 else        !!! search for point at which waves can break ice
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !Noah Day 25/10 Lc = zero(i0,Lcell,toli,toli,fn_proplng_uncoupled)
-  !Noah Day 25/10 L           = Lc
-  !Noah Day 25/10 floe_sz_max = (Lc*floe_sz_brk_emp + (Lcell-Lc)*floe_sz_init)/Lcell
-  !Noah Day 25/10 tmt         = 1   ! waves attenuated (in all liklihood)
-!Noah Day 25/10  if (idl.ne.0.and.cmt.ne.0) then
-!Noah Day 25/10   write(idl,*) '>>>>>>> RESULT:'
-!Noah Day 25/10   write(idl,*) '                      --> Breakage occurs within cell ', &
-!Noah Day 25/10   Lc/1000d0,'km' !, '(zero chk: ', fn_proplng_uncoupled(Lc),')'
-!Noah Day 25/10   write(idl,*) '                          tmt =', tmt
-!Noah Day 25/10   write(idl,*) '                  floe_sz_max =', floe_sz_max
-!   write(idl,*) '<<<---------------------------------------------<<<'
-!Noah Day 25/10  end if
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !Noah Day 25/10end if ! (Es.ge.epsc*sqrt(-2/log(Pc)))
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    end if ! (Esinit.lt.Ec)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- end if ! (Esinit.lt.Ec)
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    deallocate(om)
+    deallocate(th)
 
- deallocate(om)
- deallocate(th)
+    deallocate(k_wtr)
 
- deallocate(k_wtr)
+    deallocate(k_ice)
+    deallocate(lam_ice)
 
- deallocate(k_ice)
- deallocate(lam_ice)
+    deallocate(S_init)
+    deallocate(S_attn)
 
- deallocate(S_init)
- deallocate(S_attn)
+    deallocate(alpha)
 
- deallocate(alpha)
-
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  end if  ! (conc.lt.tolice.or.hice.eq.0d0)
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1640,8 +1651,8 @@ end if
  real (kind=8)             :: om_m, tau
  real (kind=8)             :: f1, f2, f3
 
- om_m = 2d0*pi/Tm
- tau  = 2d0*pi/omega
+ om_m = 2d0*pi/Tm ! ND: rad/s
+ tau  = 2d0*pi/omega ! s
 
  f1 = (5d0/16d0)*(Hs**2)*(om_m**4)
  f2 = omega**(moment_no-5)
@@ -1650,6 +1661,112 @@ end if
  SDF_Bretschneider = f1*f2*f3
 
  end function SDF_Bretschneider
+
+
+ !=======================================================================
+
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+ !!! dir_spec_integral !!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: dir_spec_integral  - Integrate over the southern component of the directional spectrum
+!
+! !DESCRIPTION:
+!
+!  Given a 1D wave energy spectrum, distribute energy through the angular space
+!  in order to integrate over the southern wedge
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+  function dir_spec_integral(dum_S, mwd, idl)
+!
+! !USES:
+!
+! !INPUT PARAMETERS:
+!
+
+
+ real (kind=8), intent(in) :: mwd       ! mean wave direction
+ real (kind=8), dimension(nw), intent(in) :: dum_S
+ integer, intent(in)       :: idl
+!
+! !OUTPUT PARAMETERS
+!
+
+ real (kind=8) :: dir_spec_integral
+
+!
+!EOP
+!
+
+! ND: taking over
+ integer                   :: i ! do loop index
+ integer, parameter        :: thn = 31 ! number of theta bins
+ integer, parameter        :: lower = 3.0*pi/2.0 ! lower bound for south integral
+ integer, parameter        :: upper = pi/2.0 ! upper bound for south integral
+                                    ! min           max
+ real(kind=8), parameter   :: th_min=-pi, th_max=pi
+
+ real (kind=8), dimension(thn) :: &
+     theta_vec, dir_spec
+
+ ! Direction integral, range for theta, timestep for theta
+ real (kind=8)             :: dum_int_d, theta_range, delta_th
+
+
+
+
+ !1. ND: Define and integrate the directional spectrum
+ if (WIM_DIR.eq.1) then
+     ! Calculate the directional spectum
+     theta_range = th_max-th_min ! Theta \in [-pi, pi] centered around mwd
+     delta_th = theta_range/(thn-1)
+     do i=1,thn
+       ! Increment over the bins
+       theta_vec(i) = th_min + (i-1)*delta_th
+     enddo
+
+     ! Apply the parameteric directional spreading
+     do i=1,thn
+       if (((mwd-pi/2.0) .lt. theta_vec(i)).and.(theta_vec(i) .lt. (mwd+pi/2.0))) then
+         ! -pi/2 < theta - theta_0 < pi/2
+         !  dir_spec(i) = (2.0/pi)*(COS(theta_vec(i)-mwd))**2
+	 dir_spec(i) = (15/32)*(COS(theta_vec(i)-mwd))**5 ! cosine 2s model, s =2.5 for Southern Ocean
+       else
+         dir_spec(i) = 0.0
+       endif ! < theta_vec(i) <
+     enddo
+     dum_int_d = 0.0 ! Initialise integral
+    ! dum_int_d  = SUM(dir_spec)*(2.0*pi/thn) ! Full integration, D(theta)d theta
+
+    ! Integrate over the southern wedge, [3pi/4, pi/2]
+    do i=1,thn
+       if ((theta_vec(i) .gt. lower).or.(theta_vec(i) .lt. upper)) then
+         ! Wave is travelling south so integrate the energy
+         dum_int_d = dum_int_d + delta_th * dir_spec(i) ! D(theta)d theta
+       endif ! lower (=3pi/2) >  theta_vec(i) .or   theta_vec(i) < upper (=pi/2)
+    enddo
+ else
+   ! If directional spreading is turned off give each cell all the energy
+   dum_int_d = 1.0
+ endif ! WIM_DIR
+
+
+! if (idl.ne.0) then
+!   write(idl,*) '>>>--------------------------------------------->>>'
+!   write(idl,*) '        Bretschneider  -->  dum_int_d  = ',dum_int_d
+!   write(idl,*) '                  SUM  -->  int_d  = ',sum(dir_spec)*delta_th
+!   write(idl,*) '                  MWD  -->  is  = [rad] ',mwd
+ !end if
+
+ dir_spec_integral = dum_int_d ! Output
+
+end function dir_spec_integral
 
 !=======================================================================
 

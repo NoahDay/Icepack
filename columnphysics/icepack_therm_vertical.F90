@@ -599,7 +599,7 @@
          fbot = max (fbot, frzmlt) ! frzmlt < fbot < 0
             
 !!! uncomment to use all frzmlt for standalone runs
-   !     fbot = min (c0, frzmlt)
+        fbot = min (c0, frzmlt)
 
       !-----------------------------------------------------------------
       ! Compute rside.  See these references:
