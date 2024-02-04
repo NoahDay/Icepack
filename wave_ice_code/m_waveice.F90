@@ -74,8 +74,10 @@
 ! !INTERFACE:
 !
 
- subroutine sub_Uncoupled(Lcell,dum_hice,dum_conc, &
-  dum_nw,dum_nth,dum_om,dum_th,dum_k_wtr,dum_S_init,S_attn_out,tmt,idl)
+ !subroutine sub_Uncoupled(floe_diameter, Lcell,dum_hice,dum_conc, &
+ ! dum_nw,dum_nth,dum_om,dum_th,dum_k_wtr,dum_S_init,S_attn_out,flg_amp_drop,tmt,idl)
+ subroutine sub_Uncoupled(floe_diameter, Lcell,dum_hice,dum_conc, &
+  dum_nw,dum_nth,dum_om,dum_th,dum_k_wtr,dum_S_init,S_attn_out,tmt,idl,flg_amp_drop)
 
 !
 ! !USES:
@@ -84,13 +86,16 @@
 !
 
  integer, intent(in)                             :: idl
+ real(kind=8), intent(in)                 :: floe_diameter ! Representative floe diameter, ND 30/01/2024
  real(kind=8), intent(in)                 :: Lcell
  real(kind=8), intent(in)                 :: dum_hice,dum_conc     ! cell length (m), ice thick & con
+ logical, dimension(dum_nw), intent(inout)       :: flg_amp_drop ! Amplitude drop flag
+ !logical, dimension(dum_nw)               :: flg_amp_drop ! Amplitude drop flag
 
  integer, intent(in)                                 :: dum_nw, dum_nth
  real(kind=8), dimension(dum_nw), intent(in)  :: dum_om, dum_k_wtr, dum_S_init
  real(kind=8), dimension(dum_nth), intent(in) :: dum_th
-
+!logical, dimension(dum_nw), intent(inout)       :: flg_amp_drop
 !
 ! !OUTPUT:
 !
@@ -284,18 +289,36 @@ end if
     L = Lcell ! initialise propagation length
 
     !Noah Day 25/10 floe_sz_max = floe_sz_init
+    ! ND: 1/2/2024 Adding amplitude drop
+    if (AMPLITUDE_DROP.eq.1) then
+      !flg_amp_drop(:) = .false.
+      write(idl,*) 'flg_amp_drop prior:', flg_amp_drop
+      !write(idl,*) 'S_init(lp_i) prior amplitude drop:', S_init
+      write(idl,*) 'SWH prior amplitude drop:', 4d0*fn_SpecMoment(S_init,nw,nth,om,dum_th,0,idl)**0.5d0
+      call sub_AmplitudeDrop(floe_diameter, om, S_init, flg_amp_drop)
+      write(idl,*) 'flg_amp_drop post:', flg_amp_drop
+      !write(idl,*) 'S_init(lp_i) post amplitude drop:', S_init
+      write(idl,*) 'SWH post amplitude drop:', 4d0*fn_SpecMoment(S_init,nw,nth,om,dum_th,0,idl)**0.5d0
+    endif
 
     do lp_i=1,nw
       alpha(lp_i)  = conc*fn_Attn_MBK(om(lp_i))/0.7d0
       !do lp_j=1,nth
       !S_attn(lp_i+nw*(lp_j-1)) = S_init(lp_i+nw*(lp_j-1))* &
        ! exp(-alpha(lp_i)*cos(th(lp_j))*L)
+
       if (ATTN_OFF.eq.1) then 
          S_attn(lp_i) = S_init(lp_i)
       else 
         S_attn(lp_i) = S_init(lp_i)* &
           exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
       endif ! ATTN_OFF
+
+      ! ND: 1/2/24 Adjusting attenuation
+      if (ADJUSTED_ATTN.eq.1) then
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-attenuation_adjustment(om(lp_i), floe_diameter/2.0)*alpha(lp_i)*L) 
+      endif
       !end do
     end do
 
@@ -338,6 +361,12 @@ end if
         S_attn(lp_i) = S_init(lp_i)* &
           exp(-alpha(lp_i)*L) ! ND: 14/7/22 removing directional terms
       endif ! ATTN_OFF
+
+      ! ND: 1/2/24 Adjusting attenuation
+      if (ADJUSTED_ATTN.eq.1) then
+        S_attn(lp_i) = S_init(lp_i)* &
+          exp(-attenuation_adjustment(om(lp_i), floe_diameter/2.0)*alpha(lp_i)*L) 
+      endif
       !end do
     end do
 
@@ -1767,6 +1796,222 @@ end if
  dir_spec_integral = dum_int_d ! Output
 
 end function dir_spec_integral
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!! Amplitude drop + Attenuation adjustment!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+ !!! attenuation_adjustment !!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: attenuation_adjustment  - Adjust the rate of attenuation based on the ratio of floe diameter and wavelength
+!
+! !DESCRIPTION:
+!
+!  Given the angular frequency and representative floe radius, calculate the ratio
+!  and apply an adjustment centered around the MBK attenuation coefficient.
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+  function attenuation_adjustment(om, floe_radius)
+!
+! !USES:
+!
+! !INPUT PARAMETERS:
+!
+
+
+ real (kind=8), intent(in) :: floe_radius       ! Representative floe radius
+ real (kind=8), intent(in) :: om ! Angular frequency
+!  integer, intent(in)       :: idl
+!
+! !OUTPUT PARAMETERS
+!
+
+ real (kind=8) :: attenuation_adjustment
+
+!
+!EOP
+!
+ real(kind=8), parameter   :: attnAmplitude=3.031
+ real(kind=8), parameter   :: attnRate=3.031
+ real(kind=8), parameter   :: attnHorz=2.223
+ real(kind=8), parameter   :: attnScaler=0.05
+ real(kind=8), parameter   :: attnOne=1.0
+
+ real (kind=8) :: &
+     range_attenuation, lambda, d_lambda
+
+! Calculate wavelength, lambda = 2*pi*GRAVITY/(omega**2)
+lambda = 2*pi*gravity/(om**2)
+! Ratio of floe diameter and wavelength
+d_lambda = 2*floe_radius/lambda
+
+
+! Calculate range of attenuation
+range_attenuation = -attnAmplitude*tanh(-attnRate*om + attnHorz) + attnAmplitude
+
+! Now adjust the rate of attenuation
+attenuation_adjustment = attnScaler*(range_attenuation*(tanh(-d_lambda + attnOne) + attnOne - range_attenuation/(2*attnOne))) + attnOne 
+
+end function attenuation_adjustment
+
+
+
+
+
+!=======================================================================
+
+ !!!!!!!!!!!!!!!!!!!!!!
+ !!! sub_AmplitudeDrop !!!
+ !!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: sub_AmplitudeDrop
+!
+! !DESCRIPTION:
+!
+!  Apply an amplitude drop and ensure that only one drop can occur per 
+!  propagation transect
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+
+ subroutine sub_AmplitudeDrop(fsdrad, om, dum_S, flg_amp_drop)
+
+!
+! !USES:
+!
+!
+! !INPUT PARAMETERS:
+!
+ real (kind=8), intent(in) :: fsdrad 
+ real (kind=8), dimension(nw), intent(in) :: om
+ 
+!
+! !OUTPUT PARAMETERS
+!
+ logical, dimension(nw), intent (inout) :: flg_amp_drop
+ real (kind=8), dimension(nw), intent (inout) :: dum_S
+!  real (kind=8), intent(out)               :: Es
+
+!
+!EOP
+!
+
+integer                                  :: i
+real (kind=8), dimension(nw)             :: amplitude_drop
+!  real (kind=8), dimension(nth)            :: dum_simp_th
+!  real (kind=8), dimension(nw*nth)         :: dum_vec !, F
+!  real (kind=8), dimension(nw*nth)         :: wt_simp, wt_int
+!  real (kind=8)                            :: mom0_eps, T_crit
+real(kind=8), parameter   :: transmissionMax=1.0
+
+! Get the amplitude drop amount
+amplitude_drop = AmplitudeDrop(fsdrad, om)
+
+! Apply the drop criterion and check that the amplitude drop only occurs once
+do i=1,nw
+  if (.not. flg_amp_drop(i)) then
+    if (amplitude_drop(i).lt.transmissionMax) then
+      dum_S(i) = amplitude_drop(i)*dum_S(i)
+      flg_amp_drop(i) = .true.
+    endif
+  endif
+enddo
+
+
+
+
+ end subroutine sub_AmplitudeDrop
+
+
+
+!=======================================================================
+
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+ !!! AmplitudeDrop !!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!
+
+!=======================================================================
+!BOP
+!
+! !ROUTINE: AmplitudeDrop  - Get the amplitude drop
+!
+! !DESCRIPTION:
+!
+!  Given the angular frequencies and the representative floe radius
+!  within a cell determine the amplitude drop amount
+!
+! !REVISION HISTORY: same as module
+!
+! !INTERFACE:
+!
+  function AmplitudeDrop(fsdrad, om)
+!
+! !USES:
+!
+! !INPUT PARAMETERS:
+!
+
+
+ real (kind=8), intent(in) :: fsdrad       ! Representative floe radius
+ real (kind=8), dimension(nw), intent(in) :: om ! Angular frequency
+!  integer, intent(in)       :: idl
+!
+! !OUTPUT PARAMETERS
+!
+
+ real (kind=8), dimension(nw) :: AmplitudeDrop
+
+!
+!EOP
+!
+ integer                      :: i
+
+ real(kind=8), parameter   :: transmissionRangeVert=0.3883673469387755
+ real(kind=8), parameter   :: transmissionRangeRate=2.224489795918367
+ real(kind=8), parameter   :: transmissionRangeHorz=2.387755102040816
+ real(kind=8), parameter   :: transmissionRangeMax=1.0
+ real(kind=8), parameter   :: horizontal_translation=0.8 ! Step function threshold
+
+ real (kind=8) :: &
+     range_transmission, lambda, d_lambda
+
+
+! Calculate amplitude drop over each frequency
+
+  do i=1,nw 
+    ! Calculate wavelength
+    lambda = 2*pi*gravity/(om(i)**2)
+    ! Ratio of floe diameter and wavelength
+    d_lambda = 2*fsdrad/lambda
+    range_transmission = transmissionRangeVert*tanh(-transmissionRangeRate*om(i) + transmissionRangeHorz) &
+                         - transmissionRangeVert + transmissionRangeMax
+    if (d_lambda.lt.horizontal_translation) then
+      AmplitudeDrop(i) = transmissionRangeMax
+    else
+      AmplitudeDrop(i) = range_transmission
+    endif
+  enddo
+
+
+end function AmplitudeDrop
 
 !=======================================================================
 

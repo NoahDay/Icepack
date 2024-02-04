@@ -35,7 +35,7 @@
  ! NUMERICAL PARAMS
  integer, parameter       :: WIM=1 		                ! waves in ice, (0 = off, 1 = on)
 
- integer, parameter       :: cmt=1 		                ! `write' parameter, (0 = off, 1 = on)
+ integer, parameter       :: cmt=0 		                ! `write' parameter, (0 = off, 1 = on)
 
  integer, parameter       :: do_coupled=0                   ! attn/floe size coupled?
 
@@ -98,11 +98,11 @@
  integer, parameter       :: OVERWRITE_DIRS = 1   ! overwrite wave directions with usr set ones (0=no,1=yes), set MWD to pi
  integer, parameter       :: WIM_BREAKUP = 0   ! use the WIM breakup method (0=no,1=yes)
  integer, parameter       :: WIM_LONG = 1   ! use the WIM longitudinal propagation method (0=blockwise,1=longitudinal,other=no propagation)
- integer, parameter       :: WIM_DIR = 0   ! use the WIM directional spectum method (0=no,1=yes)
+ integer, parameter       :: WIM_DIR = 1   ! use the WIM directional spectum method (0=no,1=yes)
  integer, parameter       :: ATTN_OFF = 0  ! Do not compute attenuation (0=no,1=yes), only in sub_uncoupled for now
  ! Amplitude drop tests
- integer, parameter       :: AMPLITUDE_DROP = 0  ! Turn on amplitude drop (0=no,1=yes)
- integer, parameter       :: ADJUSTED_ATTN = 0  ! Turn on adjusted MBK (2014) attenuation (0=no,1=yes)
+ integer, parameter       :: AMPLITUDE_DROP = 1  ! Turn on amplitude drop (0=no,1=yes)
+ integer, parameter       :: ADJUSTED_ATTN = 1  ! Turn on adjusted MBK (2014) attenuation (0=no,1=yes)
 
 !=======================================================================
 
